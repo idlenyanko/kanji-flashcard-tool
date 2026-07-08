@@ -113,14 +113,13 @@
     display:grid;
     grid-template-columns:repeat(2,1fr);
     grid-template-rows:repeat(4,1fr);
-    gap:6mm;
     width:190mm;height:277mm;
     page-break-after:always;
   }
   .pc{
-    border:1px dashed #999;border-radius:2mm;
+    border:0.5px dashed #999;border-radius:1mm;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
-    text-align:center;padding:4mm;overflow:hidden;
+    text-align:center;padding:1.5mm;overflow:hidden;
     min-height:0;min-width:0;
   }
   .pc .kj{font-family:var(--font-kanji);font-weight:700;line-height:1;color:#111;}
@@ -219,11 +218,15 @@
 
       <label for="f-density">Kartu per halaman</label>
       <select id="f-density" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
-        <option value="4">4 kartu (besar, hemat kanji per halaman)</option>
+        <option value="4">4 kartu (besar)</option>
         <option value="6">6 kartu</option>
-        <option value="8" selected>8 kartu (standar)</option>
+        <option value="8">8 kartu (standar)</option>
         <option value="12">12 kartu (hemat kertas)</option>
-        <option value="16">16 kartu (paling hemat kertas)</option>
+        <option value="16">16 kartu</option>
+        <option value="20" selected>20 kartu (hemat kertas)</option>
+        <option value="24">24 kartu</option>
+        <option value="30">30 kartu (sangat hemat kertas)</option>
+        <option value="40">40 kartu (paling hemat kertas, kartu kecil)</option>
       </select>
 
       <label for="f-cols">Bentuk kartu (jumlah kolom)</label>
@@ -417,11 +420,15 @@ const DENSITY_PRESETS = {
   8:  {defaultCols:2},
   12: {defaultCols:3},
   16: {defaultCols:4},
+  20: {defaultCols:4},
+  24: {defaultCols:4},
+  30: {defaultCols:5},
+  40: {defaultCols:5},
 };
 
 const PAGE_W_MM = 190; // lebar area kartu (A4 - margin)
 const PAGE_H_MM = 277; // tinggi area kartu
-const GAP_MM = 6;
+const GAP_MM = 1;
 
 function cellSizeMm(cols, rows){
   const w = (PAGE_W_MM - GAP_MM*(cols-1)) / cols;
@@ -431,9 +438,9 @@ function cellSizeMm(cols, rows){
 
 function autoKanjiSizeMm(text, cellW, cellH){
   const len = Math.max((text || '').length, 1);
-  let size = (cellW * 0.8) / len;   // asumsi tiap karakter kira-kira selebar 1 em
-  size = Math.min(size, cellH * 0.55);
-  size = Math.max(size, 5);
+  let size = (cellW * 0.85) / len;   // asumsi tiap karakter kira-kira selebar 1 em
+  size = Math.min(size, cellH * 0.6);
+  size = Math.max(size, 3);
   size = Math.min(size, 30);
   return size;
 }
@@ -499,6 +506,7 @@ function buildPrintArea(){
     // Halaman depan (kanji saja, tanpa romaji/cara baca)
     const front = document.createElement('div');
     front.className = 'print-page';
+    front.style.gap = `${GAP_MM}mm`;
     front.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
     front.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
     pageCards.forEach(c => {
@@ -516,6 +524,7 @@ function buildPrintArea(){
     // Halaman belakang (cara baca + arti) — di-mirror per baris supaya sejajar saat dibalik di tepi panjang
     const back = document.createElement('div');
     back.className = 'print-page';
+    back.style.gap = `${GAP_MM}mm`;
     back.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
     back.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
     const rowChunks = [];
