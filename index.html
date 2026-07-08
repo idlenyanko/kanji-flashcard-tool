@@ -557,9 +557,12 @@ function buildPrintArea(){
       rowChunks.push(pageCards.slice(r*cols, r*cols+cols));
     }
     rowChunks.forEach(row => {
-      const mirrored = row.slice().reverse();
-      const fullRow = [];
-      for(let i=0;i<cols;i++){ fullRow.push(mirrored[i] || null); }
+      // Padding dulu ke panjang penuh (sesuai posisi di halaman depan),
+      // baru dibalik seluruhnya — supaya kotak kosong ikut ter-mirror
+      // ke sisi yang benar, bukan cuma kartunya saja.
+      const paddedRow = [];
+      for(let i=0;i<cols;i++){ paddedRow.push(row[i] || null); }
+      const fullRow = paddedRow.slice().reverse();
       fullRow.forEach(c => {
         if(c){
           let mnSize, rdSize;
