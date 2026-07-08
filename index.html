@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Kartu Kanji — Pembuat Flashcard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
+
+  :root{
+    --paper:#F7F2E7;
+    --paper-2:#FFFFFF;
+    --ink:#211E1B;
+    --ink-soft:#6B6558;
+    --aizome:#2B3E5C;
+    --aizome-soft:#5C7096;
+    --hanko:#A33B2E;
+    --line:#D9D0BE;
+    --font-kanji:'Noto Serif JP', serif;
+    --font-reading:'Noto Serif JP', serif;
+    --font-meaning:'Zen Kaku Gothic New', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:40px 24px 80px;}
+
+  header{
+    display:flex;align-items:baseline;gap:16px;margin-bottom:8px;
+    border-bottom:2px solid var(--ink);padding-bottom:16px;
+  }
+  header .mark{
+    font-family:'Noto Serif JP',serif;font-weight:700;font-size:40px;
+    color:var(--aizome);line-height:1;
+  }
+  header h1{font-size:22px;font-weight:700;margin:0;letter-spacing:.02em;}
+  header p{margin:2px 0 0;color:var(--ink-soft);font-size:13px;}
+
+  .layout{display:grid;grid-template-columns:340px 1fr;gap:32px;margin-top:32px;}
+  @media (max-width:780px){.layout{grid-template-columns:1fr;}}
+
+  .panel{
+    background:var(--paper-2);border:1px solid var(--line);border-radius:2px;
+    padding:20px;
+  }
+  .panel h2{
+    font-size:13px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--ink-soft);margin:0 0 16px;font-weight:700;
+  }
+  label{display:block;font-size:12px;color:var(--ink-soft);margin:14px 0 4px;}
+  label:first-of-type{margin-top:0;}
+  input[type=text]{
+    width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;
+    font-size:15px;font-family:inherit;background:#fff;color:var(--ink);
+  }
+  input#f-kanji{font-family:var(--font-kanji);font-size:20px;}
+  input:focus{outline:none;border-color:var(--aizome);}
+
+  .btn{
+    border:1px solid var(--ink);background:var(--paper-2);color:var(--ink);
+    padding:9px 16px;font-size:13px;font-family:inherit;font-weight:500;
+    border-radius:2px;cursor:pointer;letter-spacing:.02em;
+  }
+  .btn:hover{background:var(--ink);color:var(--paper-2);}
+  .btn-add{
+    width:100%;margin-top:18px;background:var(--aizome);border-color:var(--aizome);
+    color:#fff;padding:11px;
+  }
+  .btn-add:hover{background:var(--aizome-soft);border-color:var(--aizome-soft);}
+  .btn-stamp{
+    background:var(--hanko);border-color:var(--hanko);color:#fff;
+  }
+  .btn-stamp:hover{background:#832E24;border-color:#832E24;}
+  .row-btns{display:flex;gap:10px;margin-top:14px;}
+  .row-btns .btn{flex:1;}
+
+  .hint{font-size:12px;color:var(--ink-soft);margin-top:10px;line-height:1.5;}
+
+  .list-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;}
+  .count{font-size:12px;color:var(--ink-soft);}
+
+  .cards-scroll{max-height:640px;overflow:auto;}
+  .card-row{
+    display:grid;grid-template-columns:56px 1fr auto;gap:14px;align-items:center;
+    padding:12px 4px;border-bottom:1px solid var(--line);
+  }
+  .card-row .kj{font-family:var(--font-kanji);font-size:26px;color:var(--aizome);text-align:center;}
+  .card-row .meta p{margin:0;}
+  .card-row .reading{font-size:12px;color:var(--ink-soft);font-family:var(--font-reading);}
+  .card-row .meaning{font-size:14px;font-family:var(--font-meaning);}
+  .del{
+    border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:12px;
+    padding:4px 8px;
+  }
+  .del:hover{color:var(--hanko);}
+  .empty{padding:32px 4px;color:var(--ink-soft);font-size:13px;text-align:center;}
+
+  /* ---- Cetak / print area (disembunyikan di layar) ---- */
+  #print-area{display:none;}
+
+  @media print{
+    body *{visibility:hidden;}
+    #print-area, #print-area *{visibility:visible;}
+    #print-area{display:block;position:absolute;top:0;left:0;width:100%;}
+    @page{size:A4;margin:10mm;}
+  }
+
+  .print-page{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    grid-template-rows:repeat(4,1fr);
+    gap:6mm;
+    width:190mm;height:277mm;
+    page-break-after:always;
+  }
+  .pc{
+    border:1px dashed #999;border-radius:2mm;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:4mm;overflow:hidden;
+    min-height:0;min-width:0;
+  }
+  .pc .kj{font-family:var(--font-kanji);font-weight:700;line-height:1;color:#111;}
+  .pc .rd{font-size:4mm;color:#555;margin-top:2mm;}
+  .pc .rd-back{font-family:var(--font-reading);color:#555;margin-bottom:1.5mm;line-height:1.15;}
+  .pc .mn{font-family:var(--font-meaning);font-weight:500;color:#111;line-height:1.2;word-break:break-word;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="mark">語</div>
+    <div>
+      <h1>Kartu Kanji</h1>
+      <p>Masukkan kanji secara manual, lalu cetak jadi flashcard dua sisi.</p>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <div class="panel">
+      <h2>Tambah kartu</h2>
+
+      <label for="f-kanji">Kanji (depan)</label>
+      <input type="text" id="f-kanji" placeholder="学">
+
+      <label for="f-reading">Cara baca (opsional)</label>
+      <input type="text" id="f-reading" placeholder="がく / gaku">
+
+      <label for="f-meaning">Arti (belakang)</label>
+      <input type="text" id="f-meaning" placeholder="belajar, ilmu">
+
+      <button class="btn btn-add" id="add-btn">Tambahkan kartu</button>
+
+      <label for="font-kanji-select" style="margin-top:20px;">Font kanji (depan)</label>
+      <select id="font-kanji-select" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+        <optgroup label="Font Google (selalu tampil sama)">
+          <option value="'Noto Serif JP', serif" selected>Noto Serif JP (serif Jepang)</option>
+          <option value="'Zen Kaku Gothic New', sans-serif">Zen Kaku Gothic New (sans Jepang)</option>
+        </optgroup>
+        <optgroup label="Font umum Windows (ikut PC kamu)">
+          <option value="'Yu Mincho', 'MS Mincho', serif">Yu Mincho</option>
+          <option value="'Yu Gothic', 'Meiryo', sans-serif">Yu Gothic</option>
+          <option value="'Meiryo', sans-serif">Meiryo</option>
+          <option value="'MS Gothic', monospace">MS Gothic</option>
+          <option value="'MS Mincho', serif">MS Mincho</option>
+        </optgroup>
+      </select>
+
+      <label for="font-reading-select">Font cara baca (belakang)</label>
+      <select id="font-reading-select" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+        <optgroup label="Font Google (selalu tampil sama)">
+          <option value="'Noto Serif JP', serif" selected>Noto Serif JP (serif Jepang)</option>
+          <option value="'Zen Kaku Gothic New', sans-serif">Zen Kaku Gothic New (sans Jepang)</option>
+        </optgroup>
+        <optgroup label="Font umum Windows (ikut PC kamu)">
+          <option value="'Yu Gothic', 'Meiryo', sans-serif">Yu Gothic</option>
+          <option value="'Meiryo', sans-serif">Meiryo</option>
+          <option value="'MS Gothic', monospace">MS Gothic</option>
+          <option value="'Segoe UI', Arial, sans-serif">Segoe UI</option>
+        </optgroup>
+      </select>
+
+      <label for="font-meaning-select">Font arti (belakang)</label>
+      <select id="font-meaning-select" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+        <optgroup label="Font Google (selalu tampil sama)">
+          <option value="'Zen Kaku Gothic New', sans-serif" selected>Zen Kaku Gothic New (sans)</option>
+          <option value="'Noto Serif JP', serif">Noto Serif JP (serif)</option>
+        </optgroup>
+        <optgroup label="Font umum Windows (ikut PC kamu)">
+          <option value="'Segoe UI', Arial, sans-serif">Segoe UI</option>
+          <option value="Calibri, Arial, sans-serif">Calibri</option>
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="'Times New Roman', serif">Times New Roman</option>
+          <option value="'Century Gothic', sans-serif">Century Gothic</option>
+          <option value="'Comic Sans MS', sans-serif">Comic Sans MS</option>
+        </optgroup>
+      </select>
+      <p class="hint">
+        Browser tidak bisa membaca daftar lengkap font di komputermu (dibatasi demi
+        privasi), jadi ini daftar font Windows yang umumnya sudah terpasang. Kalau
+        ternyata belum ada, otomatis jatuh ke font cadangan yang mirip.
+      </p>
+
+      <div class="row-btns">
+        <button class="btn" id="export-btn">Ekspor JSON</button>
+        <button class="btn" id="import-btn">Impor JSON</button>
+      </div>
+      <input type="file" id="import-file" accept="application/json" style="display:none;">
+
+      <p class="hint">
+        Data tersimpan hanya selama tab ini terbuka. Kalau mau lanjut lain kali,
+        pakai "Ekspor JSON" untuk menyimpan, lalu "Impor JSON" untuk memuatnya lagi.
+      </p>
+
+      <label for="f-density">Kartu per halaman</label>
+      <select id="f-density" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+        <option value="4">4 kartu (besar, hemat kanji per halaman)</option>
+        <option value="6">6 kartu</option>
+        <option value="8" selected>8 kartu (standar)</option>
+        <option value="12">12 kartu (hemat kertas)</option>
+        <option value="16">16 kartu (paling hemat kertas)</option>
+      </select>
+
+      <label for="f-cols">Bentuk kartu (jumlah kolom)</label>
+      <select id="f-cols" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+        <option value="auto">Otomatis (seimbang)</option>
+        <option value="1">1 kolom — paling memanjang, lebar penuh</option>
+        <option value="2">2 kolom — memanjang</option>
+        <option value="3">3 kolom</option>
+        <option value="4">4 kolom — cenderung kotak/tinggi</option>
+      </select>
+      <p class="hint">
+        Makin sedikit kolom, kartu makin memanjang ke samping — cocok untuk kanji
+        majemuk (2–4 karakter). Ukuran huruf kanji juga otomatis mengecil sendiri
+        kalau kanjinya panjang, supaya tetap muat.
+      </p>
+
+      <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;">
+        <input type="checkbox" id="f-manual-size" style="width:auto;">
+        <span style="font-size:13px;color:var(--ink);">Atur ukuran font cara baca &amp; arti secara manual</span>
+      </label>
+
+      <div id="manual-size-controls" style="display:none;margin-top:10px;">
+        <label for="f-size-reading">Ukuran font cara baca: <span id="size-reading-val">4</span> mm</label>
+        <input type="range" id="f-size-reading" min="2" max="8" step="0.5" value="4" style="width:100%;">
+
+        <label for="f-size-meaning">Ukuran font arti: <span id="size-meaning-val">6</span> mm</label>
+        <input type="range" id="f-size-meaning" min="3" max="12" step="0.5" value="6" style="width:100%;">
+
+        <p class="hint">Ukuran di atas adalah batas maksimum. Kalau ada kartu yang artinya kepanjangan untuk ukuran itu, kartu tersebut otomatis mengecil sedikit sendiri supaya tetap terbaca penuh — kartu lain yang teksnya pendek tetap pakai ukuran maksimum.</p>
+      </div>
+
+      <button class="btn btn-add btn-stamp" id="print-btn" style="margin-top:20px;">
+        Cetak flashcard
+      </button>
+      <p class="hint">
+        Pastikan cetak <strong>dua sisi (duplex), balik di tepi panjang</strong> —
+        sisi belakang sudah disusun terbalik supaya pas dengan sisi depan.
+      </p>
+    </div>
+
+    <div class="panel">
+      <div class="list-head">
+        <h2 style="margin:0;">Daftar kartu</h2>
+        <span class="count" id="count-label">0 kartu</span>
+      </div>
+      <div class="cards-scroll" id="card-list">
+        <div class="empty">Belum ada kartu. Tambahkan lewat form di sebelah kiri.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="print-area"></div>
+
+<script>
+let cards = [];
+
+const kanjiInput = document.getElementById('f-kanji');
+const readingInput = document.getElementById('f-reading');
+const meaningInput = document.getElementById('f-meaning');
+const listEl = document.getElementById('card-list');
+const countLabel = document.getElementById('count-label');
+
+function render(){
+  if(cards.length === 0){
+    listEl.innerHTML = '<div class="empty">Belum ada kartu. Tambahkan lewat form di sebelah kiri.</div>';
+  } else {
+    listEl.innerHTML = cards.map((c,i) => `
+      <div class="card-row">
+        <div class="kj">${escapeHtml(c.kanji)}</div>
+        <div class="meta">
+          <p class="reading">${escapeHtml(c.reading || '')}</p>
+          <p class="meaning">${escapeHtml(c.meaning)}</p>
+        </div>
+        <button class="del" data-i="${i}">Hapus</button>
+      </div>
+    `).join('');
+  }
+  countLabel.textContent = cards.length + ' kartu';
+}
+
+function escapeHtml(s){
+  return (s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+const fontKanjiSelect = document.getElementById('font-kanji-select');
+const fontReadingSelect = document.getElementById('font-reading-select');
+const fontMeaningSelect = document.getElementById('font-meaning-select');
+
+function applyFontChoice(varName, value){
+  document.documentElement.style.setProperty(varName, value);
+}
+fontKanjiSelect.addEventListener('change', () => applyFontChoice('--font-kanji', fontKanjiSelect.value));
+fontReadingSelect.addEventListener('change', () => applyFontChoice('--font-reading', fontReadingSelect.value));
+fontMeaningSelect.addEventListener('change', () => applyFontChoice('--font-meaning', fontMeaningSelect.value));
+
+const manualSizeCheckbox = document.getElementById('f-manual-size');
+const manualSizeControls = document.getElementById('manual-size-controls');
+const sizeReadingInput = document.getElementById('f-size-reading');
+const sizeMeaningInput = document.getElementById('f-size-meaning');
+const sizeReadingVal = document.getElementById('size-reading-val');
+const sizeMeaningVal = document.getElementById('size-meaning-val');
+
+manualSizeCheckbox.addEventListener('change', () => {
+  manualSizeControls.style.display = manualSizeCheckbox.checked ? 'block' : 'none';
+});
+sizeReadingInput.addEventListener('input', () => {
+  sizeReadingVal.textContent = sizeReadingInput.value;
+});
+sizeMeaningInput.addEventListener('input', () => {
+  sizeMeaningVal.textContent = sizeMeaningInput.value;
+});
+
+document.getElementById('add-btn').addEventListener('click', () => {
+  const kanji = kanjiInput.value.trim();
+  const reading = readingInput.value.trim();
+  const meaning = meaningInput.value.trim();
+  if(!kanji || !meaning){
+    alert('Isi kanji dan arti dulu ya.');
+    return;
+  }
+  cards.push({kanji, reading, meaning});
+  kanjiInput.value = '';
+  readingInput.value = '';
+  meaningInput.value = '';
+  kanjiInput.focus();
+  render();
+});
+
+[kanjiInput, readingInput, meaningInput].forEach(el => {
+  el.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ document.getElementById('add-btn').click(); }
+  });
+});
+
+listEl.addEventListener('click', e => {
+  if(e.target.classList.contains('del')){
+    const i = parseInt(e.target.dataset.i, 10);
+    cards.splice(i,1);
+    render();
+  }
+});
+
+document.getElementById('export-btn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(cards, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'kartu-kanji.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('import-btn').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+document.getElementById('import-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = evt => {
+    try{
+      const data = JSON.parse(evt.target.result);
+      if(Array.isArray(data)){
+        cards = data;
+        render();
+      } else {
+        alert('Format file tidak dikenali.');
+      }
+    }catch(err){
+      alert('Gagal membaca file JSON.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+document.getElementById('print-btn').addEventListener('click', () => {
+  if(cards.length === 0){
+    alert('Tambahkan minimal satu kartu dulu.');
+    return;
+  }
+  buildPrintArea();
+  window.print();
+});
+
+const DENSITY_PRESETS = {
+  4:  {defaultCols:2},
+  6:  {defaultCols:2},
+  8:  {defaultCols:2},
+  12: {defaultCols:3},
+  16: {defaultCols:4},
+};
+
+const PAGE_W_MM = 190; // lebar area kartu (A4 - margin)
+const PAGE_H_MM = 277; // tinggi area kartu
+const GAP_MM = 6;
+
+function cellSizeMm(cols, rows){
+  const w = (PAGE_W_MM - GAP_MM*(cols-1)) / cols;
+  const h = (PAGE_H_MM - GAP_MM*(rows-1)) / rows;
+  return {w, h};
+}
+
+function autoKanjiSizeMm(text, cellW, cellH){
+  const len = Math.max((text || '').length, 1);
+  let size = (cellW * 0.8) / len;   // asumsi tiap karakter kira-kira selebar 1 em
+  size = Math.min(size, cellH * 0.55);
+  size = Math.max(size, 5);
+  size = Math.min(size, 30);
+  return size;
+}
+
+function autoMeaningSizeMm(text, cellW, cellH){
+  const len = Math.max((text || '').length, 1);
+  let size = Math.sqrt((cellW * cellH * 1.1) / len);
+  size = Math.max(size, 3);
+  size = Math.min(size, cellH * 0.32);
+  size = Math.min(size, 8);
+  return size;
+}
+
+// Ukuran untuk teks CJK (kanji/kana) - satu baris, tiap karakter kira-kira selebar 1 em
+function fitCjkSizeMm(text, maxSize, cellW, cellH){
+  const len = Math.max((text || '').length, 1);
+  let size = maxSize;
+  size = Math.min(size, (cellW * 0.85) / len);
+  size = Math.min(size, cellH * 0.85);
+  size = Math.max(size, 2);
+  return size;
+}
+
+// Ukuran untuk teks Latin (arti) - boleh melipat ke beberapa baris, dihitung
+// betulan muat atau tidak di dalam sel, bukan cuma tebakan kasar
+function fitLatinSizeMm(text, maxSize, cellW, cellH){
+  const len = Math.max((text || '').length, 1);
+  const charW = 0.52;   // perkiraan lebar rata-rata 1 karakter relatif ke font-size
+  const lineH = 1.2;
+  function neededHeight(sz){
+    const charsPerLine = Math.max(1, Math.floor(cellW / (sz * charW)));
+    const lines = Math.ceil(len / charsPerLine);
+    return lines * sz * lineH;
+  }
+  let size = maxSize;
+  if(neededHeight(size) > cellH){
+    let lo = 2, hi = size;
+    for(let i = 0; i < 25; i++){
+      const mid = (lo + hi) / 2;
+      if(neededHeight(mid) <= cellH) lo = mid; else hi = mid;
+    }
+    size = lo;
+  }
+  return Math.max(size, 2);
+}
+
+function buildPrintArea(){
+  const perPage = parseInt(document.getElementById('f-density').value, 10);
+  const colsChoice = document.getElementById('f-cols').value;
+  const cols = colsChoice === 'auto' ? DENSITY_PRESETS[perPage].defaultCols : parseInt(colsChoice, 10);
+  const rows = Math.ceil(perPage / cols);
+  const {w: cellW, h: cellH} = cellSizeMm(cols, rows);
+
+  const printArea = document.getElementById('print-area');
+  printArea.innerHTML = '';
+
+  const pages = [];
+  for(let i=0; i<cards.length; i+=perPage){
+    pages.push(cards.slice(i, i+perPage));
+  }
+
+  pages.forEach(pageCards => {
+    // Halaman depan (kanji saja, tanpa romaji/cara baca)
+    const front = document.createElement('div');
+    front.className = 'print-page';
+    front.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+    front.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+    pageCards.forEach(c => {
+      const kjSize = autoKanjiSizeMm(c.kanji, cellW, cellH).toFixed(1);
+      front.innerHTML += `
+        <div class="pc">
+          <div class="kj" style="font-size:${kjSize}mm;">${escapeHtml(c.kanji)}</div>
+        </div>`;
+    });
+    for(let i=pageCards.length; i<perPage; i++){
+      front.innerHTML += `<div class="pc" style="border:none;"></div>`;
+    }
+    printArea.appendChild(front);
+
+    // Halaman belakang (cara baca + arti) — di-mirror per baris supaya sejajar saat dibalik di tepi panjang
+    const back = document.createElement('div');
+    back.className = 'print-page';
+    back.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+    back.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+    const rowChunks = [];
+    for(let r=0; r<rows; r++){
+      rowChunks.push(pageCards.slice(r*cols, r*cols+cols));
+    }
+    rowChunks.forEach(row => {
+      const mirrored = row.slice().reverse();
+      const fullRow = [];
+      for(let i=0;i<cols;i++){ fullRow.push(mirrored[i] || null); }
+      fullRow.forEach(c => {
+        if(c){
+          let mnSize, rdSize;
+          const readingBudgetH = cellH * 0.34;
+          const meaningBudgetH = cellH * 0.6;
+          const usableW = cellW * 0.9;
+          if(manualSizeCheckbox.checked){
+            // Ukuran manual jadi batas maksimum — kalau teks kepanjangan untuk
+            // ukuran itu, kartu tersebut sendiri yang mengecil sedikit supaya
+            // tetap muat penuh, tanpa memotong kata di tengah.
+            rdSize = fitCjkSizeMm(c.reading, parseFloat(sizeReadingInput.value), usableW, readingBudgetH).toFixed(1);
+            mnSize = fitLatinSizeMm(c.meaning, parseFloat(sizeMeaningInput.value), usableW, meaningBudgetH).toFixed(1);
+          } else {
+            mnSize = fitLatinSizeMm(c.meaning, 8, usableW, meaningBudgetH).toFixed(1);
+            rdSize = fitCjkSizeMm(c.reading, Math.min(parseFloat(mnSize) * 0.9, 6), usableW, readingBudgetH).toFixed(1);
+          }
+          back.innerHTML += `<div class="pc">
+            ${c.reading ? `<div class="rd-back" style="font-size:${rdSize}mm;">${escapeHtml(c.reading)}</div>` : ''}
+            <div class="mn" style="font-size:${mnSize}mm;">${escapeHtml(c.meaning)}</div>
+          </div>`;
+        } else {
+          back.innerHTML += `<div class="pc" style="border:none;"></div>`;
+        }
+      });
+    });
+    printArea.appendChild(back);
+  });
+}
+</script>
+</body>
+</html>
