@@ -93,11 +93,24 @@
   .card-row .meta p{margin:0;}
   .card-row .reading{font-size:12px;color:var(--ink-soft);font-family:var(--font-reading);}
   .card-row .meaning{font-size:14px;font-family:var(--font-meaning);}
-  .del{
+  .card-row.editing{background:#FBF6E9;}
+  .row-actions{display:flex;gap:4px;}
+  .del,.edit{
     border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:12px;
     padding:4px 8px;
   }
   .del:hover{color:var(--hanko);}
+  .edit:hover{color:var(--aizome);}
+  .form-edit-note{
+    display:none;background:var(--aizome);color:#fff;font-size:12px;padding:8px 10px;
+    border-radius:2px;margin-top:14px;align-items:center;justify-content:space-between;gap:8px;
+  }
+  .form-edit-note.active{display:flex;}
+  .form-edit-note button{
+    border:none;background:rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:11px;
+    padding:4px 8px;border-radius:2px;
+  }
+  .form-edit-note button:hover{background:rgba(255,255,255,.3);}
   .empty{padding:32px 4px;color:var(--ink-soft);font-size:13px;text-align:center;}
 
   /* ---- Cetak / print area (disembunyikan di layar) ---- */
@@ -155,6 +168,11 @@
       <input type="text" id="f-meaning" placeholder="belajar, ilmu">
 
       <button class="btn btn-add" id="add-btn">Tambahkan kartu</button>
+
+      <div class="form-edit-note" id="edit-note">
+        <span>Sedang mengedit kartu #<span id="edit-index-label"></span></span>
+        <button type="button" id="cancel-edit-btn">Batal</button>
+      </div>
 
       <label for="font-kanji-select" style="margin-top:20px;">Font kanji (depan)</label>
       <select id="font-kanji-select" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
@@ -307,25 +325,60 @@
 
 <script>
 let cards = [];
+let editIndex = null;
 
 const kanjiInput = document.getElementById('f-kanji');
 const readingInput = document.getElementById('f-reading');
 const meaningInput = document.getElementById('f-meaning');
 const listEl = document.getElementById('card-list');
 const countLabel = document.getElementById('count-label');
+const addBtn = document.getElementById('add-btn');
+const editNote = document.getElementById('edit-note');
+const editIndexLabel = document.getElementById('edit-index-label');
+const cancelEditBtn = document.getElementById('cancel-edit-btn');
+
+function enterEditMode(i){
+  editIndex = i;
+  const c = cards[i];
+  kanjiInput.value = c.kanji;
+  readingInput.value = c.reading || '';
+  meaningInput.value = c.meaning;
+  addBtn.textContent = 'Simpan perubahan';
+  editNote.classList.add('active');
+  editIndexLabel.textContent = i + 1;
+  kanjiInput.focus();
+  render();
+}
+
+function exitEditMode(){
+  editIndex = null;
+  addBtn.textContent = 'Tambahkan kartu';
+  editNote.classList.remove('active');
+  kanjiInput.value = '';
+  readingInput.value = '';
+  meaningInput.value = '';
+}
+
+cancelEditBtn.addEventListener('click', () => {
+  exitEditMode();
+  render();
+});
 
 function render(){
   if(cards.length === 0){
     listEl.innerHTML = '<div class="empty">Belum ada kartu. Tambahkan lewat form di sebelah kiri.</div>';
   } else {
     listEl.innerHTML = cards.map((c,i) => `
-      <div class="card-row">
+      <div class="card-row${i === editIndex ? ' editing' : ''}">
         <div class="kj">${escapeHtml(c.kanji)}</div>
         <div class="meta">
           <p class="reading">${escapeHtml(c.reading || '')}</p>
           <p class="meaning">${escapeHtml(c.meaning)}</p>
         </div>
-        <button class="del" data-i="${i}">Hapus</button>
+        <div class="row-actions">
+          <button class="edit" data-i="${i}">Ubah</button>
+          <button class="del" data-i="${i}">Hapus</button>
+        </div>
       </div>
     `).join('');
   }
@@ -366,7 +419,7 @@ sizeMeaningInput.addEventListener('input', () => {
   sizeMeaningVal.textContent = sizeMeaningInput.value;
 });
 
-document.getElementById('add-btn').addEventListener('click', () => {
+addBtn.addEventListener('click', () => {
   const kanji = kanjiInput.value.trim();
   const reading = readingInput.value.trim();
   const meaning = meaningInput.value.trim();
@@ -374,17 +427,23 @@ document.getElementById('add-btn').addEventListener('click', () => {
     alert('Isi kanji dan arti dulu ya.');
     return;
   }
-  cards.push({kanji, reading, meaning});
-  kanjiInput.value = '';
-  readingInput.value = '';
-  meaningInput.value = '';
+  if(editIndex !== null){
+    cards[editIndex] = {kanji, reading, meaning};
+    exitEditMode();
+  } else {
+    cards.push({kanji, reading, meaning});
+    kanjiInput.value = '';
+    readingInput.value = '';
+    meaningInput.value = '';
+  }
   kanjiInput.focus();
   render();
 });
 
 [kanjiInput, readingInput, meaningInput].forEach(el => {
   el.addEventListener('keydown', e => {
-    if(e.key === 'Enter'){ document.getElementById('add-btn').click(); }
+    if(e.key === 'Enter'){ addBtn.click(); }
+    if(e.key === 'Escape' && editIndex !== null){ exitEditMode(); render(); }
   });
 });
 
@@ -392,7 +451,13 @@ listEl.addEventListener('click', e => {
   if(e.target.classList.contains('del')){
     const i = parseInt(e.target.dataset.i, 10);
     cards.splice(i,1);
+    if(editIndex === i){ exitEditMode(); }
+    else if(editIndex !== null && i < editIndex){ editIndex--; }
     render();
+  }
+  if(e.target.classList.contains('edit')){
+    const i = parseInt(e.target.dataset.i, 10);
+    enterEditMode(i);
   }
 });
 
@@ -418,6 +483,7 @@ document.getElementById('import-file').addEventListener('change', e => {
       const data = JSON.parse(evt.target.result);
       if(Array.isArray(data)){
         cards = data;
+        exitEditMode();
         render();
       } else {
         alert('Format file tidak dikenali.');
