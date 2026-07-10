@@ -120,17 +120,20 @@
     body *{visibility:hidden;}
     #print-area, #print-area *{visibility:visible;}
     #print-area{display:block;position:absolute;top:0;left:0;width:100%;}
-    @page{size:A4;margin:10mm;}
+    @page{margin:0;}
   }
 
   .print-page{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    grid-template-rows:repeat(4,1fr);
-    width:190mm;height:277mm;
+    position:relative;
+    box-sizing:border-box;
     page-break-after:always;
   }
+  .print-grid{
+    display:grid;
+    width:100%;height:100%;
+  }
   .pc{
+    position:relative;
     border:0.5px dashed #999;border-radius:1mm;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     text-align:center;padding:1.5mm;overflow:hidden;
@@ -140,6 +143,18 @@
   .pc .rd{font-size:4mm;color:#555;margin-top:2mm;}
   .pc .rd-back{font-family:var(--font-reading);color:#555;margin-bottom:1.5mm;line-height:1.15;}
   .pc .mn{font-family:var(--font-meaning);font-weight:500;color:#111;line-height:1.2;word-break:break-word;}
+
+  /* ---- Panduan lubang plong (hole punch) ---- */
+  .holes-layer{position:absolute;inset:0;pointer-events:none;}
+  .hole{
+    position:absolute;border:0.5px dashed #999;border-radius:50%;
+    box-sizing:border-box;background:transparent;
+  }
+  .hole-preview-box{
+    margin-top:12px;border:1px solid var(--line);border-radius:2px;
+    padding:12px;display:flex;justify-content:center;align-items:center;
+    background:#FAFAF6;
+  }
 </style>
 </head>
 <body>
@@ -246,12 +261,6 @@
         <button class="btn" id="import-btn">Impor JSON</button>
       </div>
       <input type="file" id="import-file" accept="application/json" style="display:none;">
-
-      <p class="hint">
-        Data tersimpan hanya selama tab ini terbuka. Kalau mau lanjut lain kali,
-        pakai "Ekspor JSON" untuk menyimpan, lalu "Impor JSON" untuk memuatnya lagi.
-      </p>
-
       <label for="f-density">Kartu per halaman</label>
       <select id="f-density" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
         <option value="4">4 kartu (besar)</option>
@@ -279,6 +288,24 @@
         kalau kanjinya panjang, supaya tetap muat.
       </p>
 
+      <label for="f-papersize">Ukuran kertas</label>
+      <select id="f-papersize" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+        <option value="A4" selected>A4 (210 × 297 mm)</option>
+        <option value="A5">A5 (148 × 210 mm)</option>
+        <option value="A6">A6 (105 × 148 mm)</option>
+        <option value="Letter">Letter / US (215.9 × 279.4 mm)</option>
+        <option value="F4">F4 / Folio (215 × 330 mm)</option>
+      </select>
+      <p class="hint">Kalau printer cuma bisa A4, biarkan di A4 saja — kartunya tetap bisa dipotong kecil setelah dicetak.</p>
+
+      <label for="f-margin">Margin kertas: <span id="margin-val">10</span> mm</label>
+      <input type="range" id="f-margin" min="3" max="30" step="1" value="10" style="width:100%;">
+      <p class="hint">Jarak kosong dari tepi kertas ke kartu terluar. Kalau lubang plong aktif, margin di sisi lubang otomatis nambah kalau nilai ini kurang.</p>
+
+      <label for="f-gap">Jarak antar kartu: <span id="gap-val">1</span> mm</label>
+      <input type="range" id="f-gap" min="0" max="8" step="0.5" value="1" style="width:100%;">
+      <p class="hint">Makin besar jaraknya, makin gampang motongnya, tapi kartu jadi sedikit lebih kecil per halaman.</p>
+
       <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;">
         <input type="checkbox" id="f-manual-size" style="width:auto;">
         <span style="font-size:13px;color:var(--ink);">Atur ukuran font cara baca &amp; arti secara manual</span>
@@ -292,6 +319,45 @@
         <input type="range" id="f-size-meaning" min="3" max="12" step="0.5" value="6" style="width:100%;">
 
         <p class="hint">Ukuran di atas adalah batas maksimum. Kalau ada kartu yang artinya kepanjangan untuk ukuran itu, kartu tersebut otomatis mengecil sedikit sendiri supaya tetap terbaca penuh — kartu lain yang teksnya pendek tetap pakai ukuran maksimum.</p>
+      </div>
+
+      <label style="display:flex;align-items:center;gap:8px;margin-top:20px;cursor:pointer;">
+        <input type="checkbox" id="f-show-holes" style="width:auto;">
+        <span style="font-size:13px;color:var(--ink);">Tampilkan panduan lubang plong di tiap kartu</span>
+      </label>
+
+      <div id="holes-controls" style="display:none;margin-top:10px;">
+        <label for="f-hole-count">Jumlah lubang per kartu: <span id="hole-count-val">1</span></label>
+        <input type="range" id="f-hole-count" min="1" max="6" step="1" value="1" style="width:100%;">
+
+        <label for="f-hole-side">Posisi pada kartu (dekat sisi mana)</label>
+        <select id="f-hole-side" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+          <option value="top" selected>Atas</option>
+          <option value="left">Kiri</option>
+          <option value="right">Kanan</option>
+          <option value="bottom">Bawah</option>
+        </select>
+
+        <label for="f-hole-offset">Jarak titik tengah lubang dari tepi kartu: <span id="hole-offset-val">3</span> mm</label>
+        <input type="range" id="f-hole-offset" min="1" max="10" step="0.5" value="3" style="width:100%;">
+
+        <label for="f-hole-diameter">Diameter lubang: <span id="hole-diameter-val">3</span> mm</label>
+        <input type="range" id="f-hole-diameter" min="1.5" max="8" step="0.5" value="3" style="width:100%;">
+
+        <label for="f-hole-inset">Jarak antar lubang dari ujung sisi (kalau lebih dari 1): <span id="hole-inset-val">3</span> mm</label>
+        <input type="range" id="f-hole-inset" min="1" max="20" step="0.5" value="3" style="width:100%;">
+
+        <div class="hole-preview-box">
+          <svg id="hole-preview-svg" width="100" height="100"></svg>
+        </div>
+
+        <p class="hint">
+          Lubang di sini ada <strong>di dalam tiap kartu</strong> (bukan di lembar kertasnya) —
+          jadi tetap kelihatan setelah kartu dipotong satu-satu, cocok kalau mau
+          disatukan pakai ring binder. Ukuran &amp; jaraknya otomatis mengecil sendiri
+          kalau kartunya kekecilan (misal pas pilih kepadatan 40 kartu/halaman),
+          supaya lubangnya tetap muat di dalam kartu.
+        </p>
       </div>
 
       <button class="btn btn-add btn-stamp" id="print-btn" style="margin-top:20px;">
@@ -414,6 +480,153 @@ sizeMeaningInput.addEventListener('input', () => {
   sizeMeaningVal.textContent = sizeMeaningInput.value;
 });
 
+/* ---------- Ukuran kertas & panduan lubang plong ---------- */
+
+const DENSITY_PRESETS = {
+  4:  {defaultCols:2},
+  6:  {defaultCols:2},
+  8:  {defaultCols:2},
+  12: {defaultCols:3},
+  16: {defaultCols:4},
+  20: {defaultCols:4},
+  24: {defaultCols:4},
+  30: {defaultCols:5},
+  40: {defaultCols:5},
+};
+
+const PAPER_SIZES = {
+  A4:     {w:210,   h:297,   label:'A4'},
+  A5:     {w:148,   h:210,   label:'A5'},
+  A6:     {w:105,   h:148,   label:'A6'},
+  Letter: {w:215.9, h:279.4, label:'Letter'},
+  F4:     {w:215,   h:330,   label:'F4/Folio'},
+};
+
+const paperSizeSelect = document.getElementById('f-papersize');
+const marginInput = document.getElementById('f-margin');
+const marginVal = document.getElementById('margin-val');
+const gapInput = document.getElementById('f-gap');
+const gapVal = document.getElementById('gap-val');
+const showHolesCheckbox = document.getElementById('f-show-holes');
+const holesControls = document.getElementById('holes-controls');
+const holeCountInput = document.getElementById('f-hole-count');
+const holeCountVal = document.getElementById('hole-count-val');
+const holeSideSelect = document.getElementById('f-hole-side');
+const holeOffsetInput = document.getElementById('f-hole-offset');
+const holeOffsetVal = document.getElementById('hole-offset-val');
+const holeDiameterInput = document.getElementById('f-hole-diameter');
+const holeDiameterVal = document.getElementById('hole-diameter-val');
+const holeInsetInput = document.getElementById('f-hole-inset');
+const holeInsetVal = document.getElementById('hole-inset-val');
+const holePreviewSvg = document.getElementById('hole-preview-svg');
+
+function currentHoleOptions(){
+  return {
+    show: showHolesCheckbox.checked,
+    side: holeSideSelect.value,
+    count: parseInt(holeCountInput.value, 10),
+    offset: parseFloat(holeOffsetInput.value),
+    diameter: parseFloat(holeDiameterInput.value),
+    inset: parseFloat(holeInsetInput.value),
+  };
+}
+
+// Hitung posisi tiap lubang dalam mm, koordinat lokal dari pojok kiri-atas KARTU
+// (bukan kertas) — supaya lubangnya tetap ada di badan kartu setelah dipotong.
+// Ukuran & jarak otomatis dikecilkan sendiri kalau kartunya kekecilan.
+function buildHoles(cellW, cellH, side, count, offset, diameter, inset){
+  const isVertical = (side === 'left' || side === 'right');
+  const safeDiameter = Math.max(Math.min(diameter, Math.min(cellW, cellH) * 0.5), 1);
+  const crossAxis = isVertical ? cellW : cellH;
+  const safeOffset = Math.min(Math.max(offset, safeDiameter/2 + 0.3), crossAxis - safeDiameter/2 - 0.3);
+  const axisLength = isVertical ? cellH : cellW;
+  const safeInset = Math.min(Math.max(inset, safeDiameter/2 + 0.3), Math.max(axisLength/2 - 0.3, 0.3));
+  const usable = Math.max(axisLength - safeInset*2, 0);
+
+  const holes = [];
+  for(let i=0; i<count; i++){
+    const t = count === 1 ? 0.5 : i/(count-1);
+    const pos = safeInset + t*usable;
+    let left, top;
+    if(side === 'left'){ left = safeOffset; top = pos; }
+    else if(side === 'right'){ left = cellW - safeOffset; top = pos; }
+    else if(side === 'top'){ left = pos; top = safeOffset; }
+    else { left = pos; top = cellH - safeOffset; }
+    holes.push({left, top, diameter: safeDiameter});
+  }
+  return holes;
+}
+
+function getPageMargins(){
+  const base = parseFloat(marginInput.value);
+  return {top:base, right:base, bottom:base, left:base};
+}
+
+// Hitung ukuran satu sel kartu berdasarkan pengaturan cetak saat ini,
+// dipakai supaya preview lubang benar-benar merepresentasikan ukuran kartu asli.
+function computeCurrentCellSize(){
+  const perPage = parseInt(document.getElementById('f-density').value, 10);
+  const colsChoice = document.getElementById('f-cols').value;
+  const cols = colsChoice === 'auto' ? DENSITY_PRESETS[perPage].defaultCols : parseInt(colsChoice, 10);
+  const rows = Math.ceil(perPage / cols);
+  const paper = PAPER_SIZES[paperSizeSelect.value];
+  const margins = getPageMargins();
+  const gap = parseFloat(gapInput.value);
+  const pageW = paper.w - margins.left - margins.right;
+  const pageH = paper.h - margins.top - margins.bottom;
+  return cellSizeMm(cols, rows, pageW, pageH, gap);
+}
+
+function renderHolePreview(){
+  const {w: cellW, h: cellH} = computeCurrentCellSize();
+  const opts = currentHoleOptions();
+  const maxW = 100, maxH = 100;
+  let w = maxW, h = maxW * (cellH / cellW);
+  if(h > maxH){ h = maxH; w = maxH * (cellW / cellH); }
+  holePreviewSvg.setAttribute('width', w.toFixed(0));
+  holePreviewSvg.setAttribute('height', h.toFixed(0));
+  holePreviewSvg.setAttribute('viewBox', `0 0 ${cellW} ${cellH}`);
+
+  let svgHtml = `<rect x="0.3" y="0.3" width="${Math.max(cellW-0.6,0)}" height="${Math.max(cellH-0.6,0)}" fill="#fff" stroke="#999" stroke-width="0.5" stroke-dasharray="1.5,1"/>`;
+  if(opts.show){
+    const holes = buildHoles(cellW, cellH, opts.side, opts.count, opts.offset, opts.diameter, opts.inset);
+    holes.forEach(h => {
+      svgHtml += `<circle cx="${h.left.toFixed(2)}" cy="${h.top.toFixed(2)}" r="${(h.diameter/2).toFixed(2)}" fill="none" stroke="#A33B2E" stroke-width="0.6" stroke-dasharray="1,0.8"/>`;
+    });
+  }
+  holePreviewSvg.innerHTML = svgHtml;
+}
+
+function updateDynamicPageStyle(paper){
+  let styleEl = document.getElementById('dynamic-page-style');
+  if(!styleEl){
+    styleEl = document.createElement('style');
+    styleEl.id = 'dynamic-page-style';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = `@page{ size:${paper.w}mm ${paper.h}mm; margin:0; }`;
+}
+
+const densitySelect = document.getElementById('f-density');
+const colsSelect = document.getElementById('f-cols');
+
+showHolesCheckbox.addEventListener('change', () => {
+  holesControls.style.display = showHolesCheckbox.checked ? 'block' : 'none';
+  renderHolePreview();
+});
+holeCountInput.addEventListener('input', () => { holeCountVal.textContent = holeCountInput.value; renderHolePreview(); });
+holeSideSelect.addEventListener('change', renderHolePreview);
+holeOffsetInput.addEventListener('input', () => { holeOffsetVal.textContent = holeOffsetInput.value; renderHolePreview(); });
+holeDiameterInput.addEventListener('input', () => { holeDiameterVal.textContent = holeDiameterInput.value; renderHolePreview(); });
+holeInsetInput.addEventListener('input', () => { holeInsetVal.textContent = holeInsetInput.value; renderHolePreview(); });
+paperSizeSelect.addEventListener('change', renderHolePreview);
+marginInput.addEventListener('input', () => { marginVal.textContent = marginInput.value; renderHolePreview(); });
+gapInput.addEventListener('input', () => { gapVal.textContent = gapInput.value; renderHolePreview(); });
+densitySelect.addEventListener('change', renderHolePreview);
+colsSelect.addEventListener('change', renderHolePreview);
+
+renderHolePreview();
+
 addBtn.addEventListener('click', () => {
   const kanji = kanjiInput.value.trim();
   const reading = readingInput.value.trim();
@@ -500,25 +713,9 @@ document.getElementById('print-btn').addEventListener('click', () => {
   window.print();
 });
 
-const DENSITY_PRESETS = {
-  4:  {defaultCols:2},
-  6:  {defaultCols:2},
-  8:  {defaultCols:2},
-  12: {defaultCols:3},
-  16: {defaultCols:4},
-  20: {defaultCols:4},
-  24: {defaultCols:4},
-  30: {defaultCols:5},
-  40: {defaultCols:5},
-};
-
-const PAGE_W_MM = 190; // lebar area kartu (A4 - margin)
-const PAGE_H_MM = 277; // tinggi area kartu
-const GAP_MM = 1;
-
-function cellSizeMm(cols, rows){
-  const w = (PAGE_W_MM - GAP_MM*(cols-1)) / cols;
-  const h = (PAGE_H_MM - GAP_MM*(rows-1)) / rows;
+function cellSizeMm(cols, rows, pageW, pageH, gap){
+  const w = (pageW - gap*(cols-1)) / cols;
+  const h = (pageH - gap*(rows-1)) / rows;
   return {w, h};
 }
 
@@ -578,7 +775,25 @@ function buildPrintArea(){
   const colsChoice = document.getElementById('f-cols').value;
   const cols = colsChoice === 'auto' ? DENSITY_PRESETS[perPage].defaultCols : parseInt(colsChoice, 10);
   const rows = Math.ceil(perPage / cols);
-  const {w: cellW, h: cellH} = cellSizeMm(cols, rows);
+
+  const paper = PAPER_SIZES[paperSizeSelect.value];
+  const holeOpts = currentHoleOptions();
+  const margins = getPageMargins();
+  const gap = parseFloat(gapInput.value);
+
+  updateDynamicPageStyle(paper);
+
+  const pageW = paper.w - margins.left - margins.right;
+  const pageH = paper.h - margins.top - margins.bottom;
+  const {w: cellW, h: cellH} = cellSizeMm(cols, rows, pageW, pageH, gap);
+
+  // Panduan lubang plong di dalam tiap kartu (bukan di lembar kertas)
+  const cellHolesHtml = holeOpts.show
+    ? buildHoles(cellW, cellH, holeOpts.side, holeOpts.count, holeOpts.offset, holeOpts.diameter, holeOpts.inset)
+        .map(h => `<div class="hole" style="left:${(h.left - h.diameter/2).toFixed(2)}mm;top:${(h.top - h.diameter/2).toFixed(2)}mm;width:${h.diameter.toFixed(2)}mm;height:${h.diameter.toFixed(2)}mm;"></div>`)
+        .join('')
+    : '';
+  const holesLayerHtml = cellHolesHtml ? `<div class="holes-layer">${cellHolesHtml}</div>` : '';
 
   const printArea = document.getElementById('print-area');
   printArea.innerHTML = '';
@@ -588,31 +803,44 @@ function buildPrintArea(){
     pages.push(cards.slice(i, i+perPage));
   }
 
+  function newPage(){
+    const page = document.createElement('div');
+    page.className = 'print-page';
+    page.style.width = paper.w + 'mm';
+    page.style.height = paper.h + 'mm';
+    page.style.paddingTop = margins.top + 'mm';
+    page.style.paddingRight = margins.right + 'mm';
+    page.style.paddingBottom = margins.bottom + 'mm';
+    page.style.paddingLeft = margins.left + 'mm';
+
+    const grid = document.createElement('div');
+    grid.className = 'print-grid';
+    grid.style.gap = `${gap}mm`;
+    grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+    grid.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+    page.appendChild(grid);
+
+    return {page, grid};
+  }
+
   pages.forEach(pageCards => {
     // Halaman depan (kanji saja, tanpa romaji/cara baca)
-    const front = document.createElement('div');
-    front.className = 'print-page';
-    front.style.gap = `${GAP_MM}mm`;
-    front.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-    front.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+    const {page: frontPage, grid: front} = newPage();
     pageCards.forEach(c => {
       const kjSize = autoKanjiSizeMm(c.kanji, cellW, cellH).toFixed(1);
       front.innerHTML += `
         <div class="pc">
           <div class="kj" style="font-size:${kjSize}mm;">${escapeHtml(c.kanji)}</div>
+          ${holesLayerHtml}
         </div>`;
     });
     for(let i=pageCards.length; i<perPage; i++){
       front.innerHTML += `<div class="pc" style="border:none;"></div>`;
     }
-    printArea.appendChild(front);
+    printArea.appendChild(frontPage);
 
     // Halaman belakang (cara baca + arti) — di-mirror per baris supaya sejajar saat dibalik di tepi panjang
-    const back = document.createElement('div');
-    back.className = 'print-page';
-    back.style.gap = `${GAP_MM}mm`;
-    back.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-    back.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+    const {page: backPage, grid: back} = newPage();
     const rowChunks = [];
     for(let r=0; r<rows; r++){
       rowChunks.push(pageCards.slice(r*cols, r*cols+cols));
@@ -643,13 +871,14 @@ function buildPrintArea(){
           back.innerHTML += `<div class="pc">
             ${c.reading ? `<div class="rd-back" style="font-size:${rdSize}mm;">${escapeHtml(c.reading)}</div>` : ''}
             <div class="mn" style="font-size:${mnSize}mm;">${escapeHtml(c.meaning)}</div>
+            ${holesLayerHtml}
           </div>`;
         } else {
           back.innerHTML += `<div class="pc" style="border:none;"></div>`;
         }
       });
     });
-    printArea.appendChild(back);
+    printArea.appendChild(backPage);
   });
 }
 </script>
