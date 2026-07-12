@@ -21,6 +21,9 @@
     --font-meaning:'Zen Kaku Gothic New', sans-serif;
   }
   *{box-sizing:border-box;}
+  ruby{ruby-position:over;}
+  rt{font-size:0.42em;font-weight:400;line-height:1;letter-spacing:0;}
+  code{background:#F0EAD9;border-radius:2px;padding:1px 5px;font-size:11px;}
   body{
     margin:0;
     background:var(--paper);
@@ -93,6 +96,40 @@
   .card-row .meta p{margin:0;}
   .card-row .reading{font-size:12px;color:var(--ink-soft);font-family:var(--font-reading);}
   .card-row .meaning{font-size:14px;font-family:var(--font-meaning);}
+  .card-row .example{font-size:11px;color:var(--ink-soft);font-style:italic;margin-top:2px;font-family:var(--font-reading);}
+  .card-row .example .ex-mn-inline{font-style:normal;color:var(--ink-soft);opacity:.8;}
+  .row-thumb{width:56px;height:56px;object-fit:contain;border:1px solid var(--line);border-radius:2px;background:#fff;}
+
+  .type-toggle{display:flex;gap:6px;margin:0 0 10px;}
+  .type-btn{
+    flex:1;border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+    padding:7px 10px;font-size:12px;font-family:inherit;font-weight:600;
+    border-radius:2px;cursor:pointer;letter-spacing:.02em;
+  }
+  .type-btn.active{background:var(--aizome);border-color:var(--aizome);color:#fff;}
+  .type-btn:not(.active):hover{border-color:var(--aizome);color:var(--aizome);}
+  input[type=file]{
+    width:100%;font-size:12px;color:var(--ink-soft);padding:8px 0;
+  }
+  .img-preview{margin-top:8px;}
+  .img-preview img{max-width:100%;max-height:120px;object-fit:contain;border:1px solid var(--line);border-radius:2px;background:#fff;display:block;}
+  .side-block{border-top:1px dashed var(--line);padding-top:14px;margin-top:14px;}
+  .side-block:first-of-type{border-top:none;padding-top:0;margin-top:0;}
+  .side-block > label:first-of-type{margin-top:0;}
+
+  .example-row{
+    border:1px solid var(--line);border-radius:2px;padding:10px;margin-bottom:8px;
+    position:relative;background:#FAFAF6;
+  }
+  .example-row input{margin-top:6px;}
+  .example-row input:first-of-type{margin-top:0;}
+  .example-row .example-meaning{font-size:13px;color:var(--ink-soft);}
+  .example-remove{
+    position:absolute;top:6px;right:6px;border:none;background:none;color:var(--ink-soft);
+    cursor:pointer;font-size:13px;padding:2px 6px;line-height:1;
+  }
+  .example-remove:hover{color:var(--hanko);}
+  .example-label{font-size:11px;color:var(--ink-soft);margin:0 0 2px;}
   .card-row.editing{background:#FBF6E9;}
   .row-actions{display:flex;gap:4px;}
   .del,.edit{
@@ -143,6 +180,35 @@
   .pc .rd{font-size:4mm;color:#555;margin-top:2mm;}
   .pc .rd-back{font-family:var(--font-reading);color:#555;margin-bottom:1.5mm;line-height:1.15;}
   .pc .mn{font-family:var(--font-meaning);font-weight:500;color:#111;line-height:1.2;word-break:break-word;}
+  .pc .ex-wrap{width:100%;display:flex;flex-direction:column;gap:1.2mm;margin-top:1.5mm;}
+  .pc .ex-jp{font-family:var(--font-reading);color:#333;line-height:1.2;word-break:break-word;}
+  .pc .ex-mn{font-family:var(--font-meaning);color:#777;font-style:italic;line-height:1.15;word-break:break-word;}
+  .pc .pc-img{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;}
+
+  /* ---- Background kartu (global / per-kartu) ---- */
+  .pc-bg{position:absolute;inset:0;pointer-events:none;z-index:-1;background-repeat:repeat;}
+
+  /* ---- Badge grup ---- */
+  .pc-badge{
+    position:absolute;font-size:2.2mm;padding:0.6mm 1.6mm;border-radius:1mm;
+    line-height:1.3;max-width:75%;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap;z-index:2;pointer-events:none;
+  }
+
+  /* ---- Watermark / kredit pembuat ---- */
+  .pc-watermark{
+    position:absolute;display:flex;align-items:center;gap:0.8mm;
+    line-height:1.2;max-width:70%;overflow:hidden;color:#333;
+    z-index:3;pointer-events:none;white-space:nowrap;
+  }
+  .pc-watermark img{height:1em;width:auto;object-fit:contain;display:block;flex-shrink:0;}
+  .pc-watermark span{overflow:hidden;text-overflow:ellipsis;}
+  .watermark-footer{
+    position:absolute;left:0;right:0;bottom:1.2mm;
+    display:flex;align-items:center;justify-content:center;gap:2mm;
+    color:#333;font-family:var(--font-meaning);pointer-events:none;
+  }
+  .watermark-footer img{height:1em;width:auto;object-fit:contain;display:block;}
 
   /* ---- Panduan lubang plong (hole punch) ---- */
   .holes-layer{position:absolute;inset:0;pointer-events:none;}
@@ -155,6 +221,34 @@
     padding:12px;display:flex;justify-content:center;align-items:center;
     background:#FAFAF6;
   }
+
+  /* ---- Grup kartu (panel manajemen) ---- */
+  .group-row{
+    border:1px solid var(--line);border-radius:2px;padding:10px;margin-bottom:8px;
+    background:#FAFAF6;
+  }
+  .group-row-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+  .group-row-name{font-size:13px;font-weight:700;color:var(--ink);}
+  .group-row-name .active-tag{font-size:10px;font-weight:400;color:#fff;background:var(--aizome);border-radius:2px;padding:1px 6px;margin-left:6px;}
+  .group-row-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+  .group-row-controls label{display:flex;align-items:center;gap:4px;font-size:11px;margin:0;color:var(--ink-soft);}
+  .group-row-controls input[type=color]{width:28px;height:24px;padding:0;border:1px solid var(--line);cursor:pointer;}
+  .group-row-controls select{font-size:11px;padding:3px 4px;border:1px solid var(--line);border-radius:2px;background:#fff;}
+  .group-del{border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:11px;}
+  .group-del:hover{color:var(--hanko);}
+  .group-section{margin-top:10px;}
+  .group-section:first-child{margin-top:0;}
+  .group-section summary{
+    list-style:none;cursor:pointer;user-select:none;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    background:#FAF7EF;padding:8px 10px;border:1px solid var(--line);border-radius:2px;
+  }
+  .group-section summary::-webkit-details-marker{display:none;}
+  .group-section summary .swatch{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .group-section summary .name{font-size:12px;font-weight:700;flex:1;}
+  .group-section summary .n{font-size:11px;color:var(--ink-soft);}
+  .group-section summary::after{content:'▾';color:var(--ink-soft);font-size:10px;}
+  .group-section[open] summary::after{content:'▴';}
 
   /* ---- Menu dropdown (accordion) untuk panel kontrol ---- */
   .ctrl-group{
@@ -262,16 +356,155 @@
       </div>
 
       <details class="ctrl-group" open>
+        <summary>Grup kartu</summary>
+        <div class="ctrl-body">
+          <label for="f-group-new">Nama grup baru</label>
+          <input type="text" id="f-group-new" placeholder="Bab 5 / N4 - Kata Kerja">
+          <button type="button" class="btn" id="add-group-btn" style="width:100%;margin-top:8px;">+ Tambah &amp; jadikan grup aktif</button>
+
+          <label for="f-group-active" style="margin-top:16px;">Grup aktif (kartu baru otomatis masuk sini)</label>
+          <select id="f-group-active" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+            <option value="">— Tanpa grup —</option>
+          </select>
+          <p class="hint" style="margin-top:8px;">Mau pindah grup? Pilih/tambah grup lain di sini dulu, baru isi form "Tambah kartu" di bawah.</p>
+
+          <div id="group-list" style="margin-top:14px;"></div>
+
+          <label for="f-badge-position" style="margin-top:16px;">Posisi badge grup di kartu</label>
+          <select id="f-badge-position" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+            <option value="top-left" selected>Kiri atas</option>
+            <option value="top-right">Kanan atas</option>
+            <option value="bottom-left">Kiri bawah</option>
+            <option value="bottom-right">Kanan bawah</option>
+          </select>
+
+          <label for="f-badge-show" style="margin-top:14px;">Tampilkan badge di</label>
+          <select id="f-badge-show" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+            <option value="both" selected>Depan &amp; belakang</option>
+            <option value="front">Depan saja</option>
+            <option value="back">Belakang saja</option>
+            <option value="none">Sembunyikan</option>
+          </select>
+        </div>
+      </details>
+
+      <details class="ctrl-group" open>
         <summary>Tambah kartu</summary>
         <div class="ctrl-body">
-          <label for="f-kanji">Kanji (depan)</label>
-          <input type="text" id="f-kanji" placeholder="学">
 
-          <label for="f-reading">Cara baca (opsional)</label>
-          <input type="text" id="f-reading" placeholder="がく / gaku">
+          <p class="hint" id="active-group-indicator" style="margin-top:0;"></p>
 
-          <label for="f-meaning">Arti (belakang)</label>
-          <input type="text" id="f-meaning" placeholder="belajar, ilmu">
+          <label>Mode kartu</label>
+          <div class="type-toggle" id="card-mode-toggle">
+            <button type="button" class="type-btn active" data-mode="umum">Umum</button>
+            <button type="button" class="type-btn" data-mode="kanji">Kanji + Furigana</button>
+          </div>
+          <p class="hint" id="kanji-mode-hint" style="display:none;">
+            Tulis kanji lalu cara bacanya dalam kurung siku tepat setelah kanjinya, contoh:
+            <code>学校[がっこう]に 行[い]きます</code>. Bagian yang bukan kanji (kana, tanda baca)
+            tidak perlu dikasih kurung. Furigana juga bisa dipakai di "Contoh kalimat".
+          </p>
+
+          <div class="side-block">
+            <label>Sisi depan</label>
+            <div class="type-toggle" id="front-type-toggle">
+              <button type="button" class="type-btn active" data-side="front" data-type="text">Teks</button>
+              <button type="button" class="type-btn" data-side="front" data-type="image">Gambar</button>
+            </div>
+
+            <div id="front-text-fields">
+              <label for="f-kanji" id="front-kanji-label">Kanji (depan)</label>
+              <input type="text" id="f-kanji" placeholder="学">
+            </div>
+
+            <div id="front-image-fields" style="display:none;">
+              <label for="f-front-image-file">Upload gambar</label>
+              <input type="file" id="f-front-image-file" accept="image/*">
+              <label for="f-front-image-url">atau tempel URL gambar</label>
+              <input type="text" id="f-front-image-url" placeholder="https://...">
+              <div class="img-preview" id="front-img-preview"></div>
+              <button type="button" class="btn" id="front-img-clear" style="width:100%;margin-top:8px;">✕ Hapus gambar</button>
+            </div>
+          </div>
+
+          <div class="side-block">
+            <label>Sisi belakang</label>
+            <div class="type-toggle" id="back-type-toggle">
+              <button type="button" class="type-btn active" data-side="back" data-type="text">Teks</button>
+              <button type="button" class="type-btn" data-side="back" data-type="image">Gambar</button>
+            </div>
+
+            <div id="back-text-fields">
+              <div id="back-reading-block">
+                <label for="f-reading">Cara baca (opsional)</label>
+                <input type="text" id="f-reading" placeholder="がく / gaku">
+              </div>
+
+              <label for="f-meaning">Arti (belakang)</label>
+              <input type="text" id="f-meaning" placeholder="belajar, ilmu">
+
+              <div id="back-example-block" style="display:none;">
+                <label>Contoh kalimat (opsional, bisa lebih dari satu)</label>
+                <div id="example-list"></div>
+                <button type="button" class="btn" id="add-example-btn" style="width:100%;">+ Tambah contoh</button>
+              </div>
+            </div>
+
+            <div id="back-image-fields" style="display:none;">
+              <label for="f-back-image-file">Upload gambar</label>
+              <input type="file" id="f-back-image-file" accept="image/*">
+              <label for="f-back-image-url">atau tempel URL gambar</label>
+              <input type="text" id="f-back-image-url" placeholder="https://...">
+              <div class="img-preview" id="back-img-preview"></div>
+              <button type="button" class="btn" id="back-img-clear" style="width:100%;margin-top:8px;">✕ Hapus gambar</button>
+            </div>
+          </div>
+
+          <div class="side-block">
+            <label style="display:flex;align-items:center;gap:8px;margin-top:0;cursor:pointer;">
+              <input type="checkbox" id="f-bg-override" style="width:auto;">
+              <span style="font-size:13px;color:var(--ink);">Pakai background khusus untuk kartu ini (bukan global)</span>
+            </label>
+
+            <div id="bg-override-controls" style="display:none;margin-top:10px;">
+              <label for="f-bg-override-type">Jenis background</label>
+              <select id="f-bg-override-type" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+                <option value="solid">Warna solid</option>
+                <option value="pattern">Pola</option>
+                <option value="image">Gambar</option>
+              </select>
+
+              <div id="bg-override-solid" style="display:none;margin-top:10px;">
+                <label for="f-bg-override-color">Warna</label>
+                <input type="color" id="f-bg-override-color" value="#F7F2E7">
+              </div>
+
+              <div id="bg-override-pattern" style="display:none;margin-top:10px;">
+                <label for="f-bg-override-pattern-type">Jenis pola</label>
+                <select id="f-bg-override-pattern-type" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+                  <option value="dots">Titik-titik</option>
+                  <option value="stripes">Garis diagonal</option>
+                  <option value="grid">Kotak-kotak</option>
+                </select>
+                <label for="f-bg-override-pattern-color">Warna pola</label>
+                <input type="color" id="f-bg-override-pattern-color" value="#D9D0BE">
+                <label for="f-bg-override-pattern-bg">Warna dasar</label>
+                <input type="color" id="f-bg-override-pattern-bg" value="#FFFFFF">
+              </div>
+
+              <div id="bg-override-image" style="display:none;margin-top:10px;">
+                <label for="f-bg-override-image-file">Upload gambar</label>
+                <input type="file" id="f-bg-override-image-file" accept="image/*">
+                <label for="f-bg-override-image-url">atau tempel URL gambar</label>
+                <input type="text" id="f-bg-override-image-url" placeholder="https://...">
+                <div class="img-preview" id="bg-override-image-preview"></div>
+                <button type="button" class="btn" id="bg-override-img-clear" style="width:100%;margin-top:8px;">✕ Hapus gambar</button>
+              </div>
+
+              <label for="f-bg-override-opacity">Opacity: <span id="bg-override-opacity-val">100</span>%</label>
+              <input type="range" id="f-bg-override-opacity" min="5" max="100" step="5" value="100" style="width:100%;">
+            </div>
+          </div>
 
           <button class="btn btn-add" id="add-btn">Tambahkan kartu</button>
 
@@ -467,6 +700,105 @@
           </div>
         </div>
       </details>
+
+      <details class="ctrl-group">
+        <summary>Watermark / kredit pembuat</summary>
+        <div class="ctrl-body">
+          <label style="display:flex;align-items:center;gap:8px;margin-top:0;cursor:pointer;">
+            <input type="checkbox" id="f-wm-enable" style="width:auto;">
+            <span style="font-size:13px;color:var(--ink);">Aktifkan watermark</span>
+          </label>
+
+          <div id="wm-controls" style="display:none;margin-top:10px;">
+            <label for="f-wm-text">Teks watermark (opsional)</label>
+            <input type="text" id="f-wm-text" placeholder="dibuat oleh Nama / @username">
+
+            <label for="f-wm-logo-file" style="margin-top:14px;">Logo watermark (opsional)</label>
+            <input type="file" id="f-wm-logo-file" accept="image/*">
+            <label for="f-wm-logo-url">atau tempel URL logo</label>
+            <input type="text" id="f-wm-logo-url" placeholder="https://...">
+            <div class="img-preview" id="wm-logo-preview"></div>
+            <button type="button" class="btn" id="wm-logo-clear" style="width:100%;margin-top:8px;">✕ Hapus logo</button>
+
+            <p class="hint" style="margin-top:10px;">Isi teks saja, logo saja, atau dua-duanya — yang diisi itu yang akan ditampilkan.</p>
+
+            <label for="f-wm-placement" style="margin-top:14px;">Penempatan</label>
+            <select id="f-wm-placement" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+              <option value="card">Di tiap kartu (pojok, ikut terpotong)</option>
+              <option value="footer" selected>Di footer halaman (sekali per halaman, tidak ikut terpotong)</option>
+            </select>
+
+            <div id="wm-card-position-wrap" style="display:none;">
+              <label for="f-wm-position" style="margin-top:14px;">Posisi di kartu</label>
+              <select id="f-wm-position" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+                <option value="top-left">Kiri atas</option>
+                <option value="top-right">Kanan atas</option>
+                <option value="bottom-left">Kiri bawah</option>
+                <option value="bottom-right" selected>Kanan bawah</option>
+              </select>
+            </div>
+
+            <label for="f-wm-opacity" style="margin-top:14px;">Opacity: <span id="wm-opacity-val">55</span>%</label>
+            <input type="range" id="f-wm-opacity" min="10" max="100" step="5" value="55" style="width:100%;">
+
+            <label for="f-wm-size" style="margin-top:14px;">Ukuran: <span id="wm-size-val">2.5</span> mm</label>
+            <input type="range" id="f-wm-size" min="1.5" max="6" step="0.5" value="2.5" style="width:100%;">
+
+            <p class="hint">
+              Kalau ditaruh <strong>di tiap kartu</strong>, watermark muncul di kedua sisi (depan &amp;
+              belakang) tiap kartu, di pojok yang dipilih — kalau posisinya sama dengan badge grup,
+              keduanya bisa tumpang tindih, jadi pilih pojok yang beda kalau perlu. Kalau ditaruh
+              <strong>di footer halaman</strong>, watermark cuma muncul sekali di bagian bawah tiap
+              halaman cetak (di area margin, bukan ikut kartu) — pastikan margin kertas cukup
+              (di menu "Tata letak &amp; ukuran kertas") supaya tidak kepotong sama grid kartu.
+            </p>
+          </div>
+        </div>
+      </details>
+
+      <details class="ctrl-group">
+        <summary>Background kartu (global)</summary>
+        <div class="ctrl-body">
+          <label for="f-bg-type">Jenis background</label>
+          <select id="f-bg-type" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+            <option value="none" selected>Tidak ada (putih polos)</option>
+            <option value="solid">Warna solid</option>
+            <option value="pattern">Pola</option>
+            <option value="image">Gambar</option>
+          </select>
+
+          <div id="bg-solid-controls" style="display:none;margin-top:10px;">
+            <label for="f-bg-color">Warna</label>
+            <input type="color" id="f-bg-color" value="#F7F2E7">
+          </div>
+
+          <div id="bg-pattern-controls" style="display:none;margin-top:10px;">
+            <label for="f-bg-pattern-type">Jenis pola</label>
+            <select id="f-bg-pattern-type" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+              <option value="dots">Titik-titik</option>
+              <option value="stripes">Garis diagonal</option>
+              <option value="grid">Kotak-kotak</option>
+            </select>
+            <label for="f-bg-pattern-color">Warna pola</label>
+            <input type="color" id="f-bg-pattern-color" value="#D9D0BE">
+            <label for="f-bg-pattern-bg">Warna dasar</label>
+            <input type="color" id="f-bg-pattern-bg" value="#FFFFFF">
+          </div>
+
+          <div id="bg-image-controls" style="display:none;margin-top:10px;">
+            <label for="f-bg-image-file">Upload gambar</label>
+            <input type="file" id="f-bg-image-file" accept="image/*">
+            <label for="f-bg-image-url">atau tempel URL gambar</label>
+            <input type="text" id="f-bg-image-url" placeholder="https://...">
+            <div class="img-preview" id="bg-image-preview"></div>
+            <button type="button" class="btn" id="bg-img-clear" style="width:100%;margin-top:8px;">✕ Hapus gambar</button>
+          </div>
+
+          <label for="f-bg-opacity" style="margin-top:14px;">Opacity background: <span id="bg-opacity-val">100</span>%</label>
+          <input type="range" id="f-bg-opacity" min="5" max="100" step="5" value="100" style="width:100%;">
+          <p class="hint">Berlaku untuk semua kartu, kecuali kartu yang diberi background khusus lewat form "Tambah kartu".</p>
+        </div>
+      </details>
     </div>
 
     <div class="panel">
@@ -501,10 +833,23 @@
 <script>
 let cards = [];
 let editIndex = null;
+let frontType = 'text';
+let backType = 'text';
+let frontImageData = null; // dataURL hasil resize dari file upload (sisi depan)
+let backImageData = null;  // dataURL hasil resize dari file upload (sisi belakang)
 
 const kanjiInput = document.getElementById('f-kanji');
 const readingInput = document.getElementById('f-reading');
 const meaningInput = document.getElementById('f-meaning');
+const exampleListEl = document.getElementById('example-list');
+const addExampleBtn = document.getElementById('add-example-btn');
+let currentExamples = []; // [{jp, meaning}] — daftar contoh untuk kartu yang lagi diisi/diedit
+const frontImageFileInput = document.getElementById('f-front-image-file');
+const frontImageUrlInput = document.getElementById('f-front-image-url');
+const backImageFileInput = document.getElementById('f-back-image-file');
+const backImageUrlInput = document.getElementById('f-back-image-url');
+const frontImgPreview = document.getElementById('front-img-preview');
+const backImgPreview = document.getElementById('back-img-preview');
 const listEl = document.getElementById('card-list');
 const countLabel = document.getElementById('count-label');
 const addBtn = document.getElementById('add-btn');
@@ -512,26 +857,573 @@ const editNote = document.getElementById('edit-note');
 const editIndexLabel = document.getElementById('edit-index-label');
 const cancelEditBtn = document.getElementById('cancel-edit-btn');
 
+// ---------- Grup kartu & badge ----------
+let groups = []; // [{name, bg, text, font}]
+let activeGroup = ''; // nama grup aktif; kartu baru otomatis pakai ini
+let badgePosition = 'top-left';
+let badgeShow = 'both';
+
+const groupNewInput = document.getElementById('f-group-new');
+const addGroupBtn = document.getElementById('add-group-btn');
+const groupActiveSelect = document.getElementById('f-group-active');
+const groupListEl = document.getElementById('group-list');
+const activeGroupIndicator = document.getElementById('active-group-indicator');
+const badgePositionSelect = document.getElementById('f-badge-position');
+const badgeShowSelect = document.getElementById('f-badge-show');
+
+const DEFAULT_GROUP_COLORS = ['#2B3E5C','#A33B2E','#3E6B4F','#8A5A2B','#5C4A7A','#2B6B6B'];
+function pickGroupColor(){
+  return DEFAULT_GROUP_COLORS[groups.length % DEFAULT_GROUP_COLORS.length];
+}
+
+function getGroupStyle(name){
+  const g = groups.find(g => g.name === name);
+  if(g) return g;
+  // Fallback kalau grup tidak/tidak-lagi terdaftar (misal habis diimpor dari JSON lama)
+  return {name, bg:'#6B6558', text:'#FFFFFF', font:"'Zen Kaku Gothic New', sans-serif"};
+}
+
+function ensureGroupExists(name){
+  if(!name) return;
+  if(!groups.find(g => g.name === name)){
+    groups.push({name, bg: pickGroupColor(), text:'#FFFFFF', font:"'Zen Kaku Gothic New', sans-serif"});
+  }
+}
+
+function updateGroupSelectOptions(){
+  const prevValue = activeGroup;
+  groupActiveSelect.innerHTML = '<option value="">— Tanpa grup —</option>' +
+    groups.map(g => `<option value="${escapeHtml(g.name)}">${escapeHtml(g.name)}</option>`).join('');
+  groupActiveSelect.value = groups.find(g => g.name === prevValue) ? prevValue : '';
+  activeGroup = groupActiveSelect.value;
+  updateActiveGroupIndicator();
+}
+
+function updateActiveGroupIndicator(){
+  activeGroupIndicator.innerHTML = activeGroup
+    ? `Grup aktif sekarang: <strong>${escapeHtml(activeGroup)}</strong> — kartu baru otomatis masuk ke sini.`
+    : 'Tidak ada grup aktif — kartu baru akan tanpa grup.';
+}
+
+function renderGroupList(){
+  if(groups.length === 0){
+    groupListEl.innerHTML = '';
+    return;
+  }
+  groupListEl.innerHTML = groups.map(g => `
+    <div class="group-row" data-group="${escapeHtml(g.name)}">
+      <div class="group-row-top">
+        <div class="group-row-name">${escapeHtml(g.name)}${g.name === activeGroup ? '<span class="active-tag">aktif</span>' : ''}</div>
+        <button type="button" class="group-del" data-group="${escapeHtml(g.name)}">Hapus grup</button>
+      </div>
+      <div class="group-row-controls">
+        <label>Badge <input type="color" class="grp-bg" data-group="${escapeHtml(g.name)}" value="${g.bg}"></label>
+        <label>Teks <input type="color" class="grp-text" data-group="${escapeHtml(g.name)}" value="${g.text}"></label>
+        <select class="grp-font" data-group="${escapeHtml(g.name)}">
+          <option value="'Zen Kaku Gothic New', sans-serif" ${g.font.includes('Zen Kaku')?'selected':''}>Zen Kaku Gothic</option>
+          <option value="'Noto Sans JP', sans-serif" ${g.font.includes('Noto Sans')?'selected':''}>Noto Sans JP</option>
+          <option value="'Noto Serif JP', serif" ${g.font.includes('Noto Serif')?'selected':''}>Noto Serif JP</option>
+          <option value="Arial, sans-serif" ${g.font.includes('Arial')?'selected':''}>Arial</option>
+        </select>
+      </div>
+    </div>
+  `).join('');
+}
+
+addGroupBtn.addEventListener('click', () => {
+  const name = groupNewInput.value.trim();
+  if(!name){ alert('Isi nama grup dulu ya.'); return; }
+  ensureGroupExists(name);
+  activeGroup = name;
+  groupNewInput.value = '';
+  updateGroupSelectOptions();
+  groupActiveSelect.value = name;
+  activeGroup = name;
+  updateActiveGroupIndicator();
+  renderGroupList();
+  render();
+});
+
+groupActiveSelect.addEventListener('change', () => {
+  activeGroup = groupActiveSelect.value;
+  updateActiveGroupIndicator();
+  renderGroupList();
+});
+
+groupListEl.addEventListener('input', e => {
+  const name = e.target.dataset.group;
+  if(!name) return;
+  const g = groups.find(g => g.name === name);
+  if(!g) return;
+  if(e.target.classList.contains('grp-bg')) g.bg = e.target.value;
+  if(e.target.classList.contains('grp-text')) g.text = e.target.value;
+});
+groupListEl.addEventListener('change', e => {
+  const name = e.target.dataset.group;
+  if(!name) return;
+  const g = groups.find(g => g.name === name);
+  if(!g) return;
+  if(e.target.classList.contains('grp-font')) g.font = e.target.value;
+});
+groupListEl.addEventListener('click', e => {
+  if(e.target.classList.contains('group-del')){
+    const name = e.target.dataset.group;
+    if(!confirm(`Hapus grup "${name}"? Kartu yang sudah punya grup ini akan tetap menyimpan nama grupnya (badge memakai warna default) sampai kamu buat ulang grupnya.`)) return;
+    groups = groups.filter(g => g.name !== name);
+    if(activeGroup === name) activeGroup = '';
+    updateGroupSelectOptions();
+    renderGroupList();
+    render();
+  }
+});
+
+badgePositionSelect.addEventListener('change', () => { badgePosition = badgePositionSelect.value; });
+badgeShowSelect.addEventListener('change', () => { badgeShow = badgeShowSelect.value; });
+
+updateActiveGroupIndicator();
+
+// ---------- Background kartu (global & per-kartu) ----------
+function newBackgroundData(){
+  return {type:'none', solidColor:'#F7F2E7', patternType:'dots', patternColor:'#D9D0BE', patternBg:'#FFFFFF', imageSrc:null, imageUrl:'', opacity:1};
+}
+let globalBackground = newBackgroundData();
+let bgOverrideData = newBackgroundData();
+bgOverrideData.type = 'solid';
+
+const bgTypeSelect = document.getElementById('f-bg-type');
+const bgSolidControls = document.getElementById('bg-solid-controls');
+const bgPatternControls = document.getElementById('bg-pattern-controls');
+const bgImageControls = document.getElementById('bg-image-controls');
+const bgColorInput = document.getElementById('f-bg-color');
+const bgPatternTypeSelect = document.getElementById('f-bg-pattern-type');
+const bgPatternColorInput = document.getElementById('f-bg-pattern-color');
+const bgPatternBgInput = document.getElementById('f-bg-pattern-bg');
+const bgImageFileInput = document.getElementById('f-bg-image-file');
+const bgImageUrlInput = document.getElementById('f-bg-image-url');
+const bgImagePreview = document.getElementById('bg-image-preview');
+const bgOpacityInput = document.getElementById('f-bg-opacity');
+const bgOpacityVal = document.getElementById('bg-opacity-val');
+
+function updateBgTypeVisibility(type, solidEl, patternEl, imageEl){
+  solidEl.style.display = type === 'solid' ? 'block' : 'none';
+  patternEl.style.display = type === 'pattern' ? 'block' : 'none';
+  imageEl.style.display = type === 'image' ? 'block' : 'none';
+}
+
+bgTypeSelect.addEventListener('change', () => {
+  globalBackground.type = bgTypeSelect.value;
+  updateBgTypeVisibility(globalBackground.type, bgSolidControls, bgPatternControls, bgImageControls);
+});
+bgColorInput.addEventListener('input', () => { globalBackground.solidColor = bgColorInput.value; });
+bgPatternTypeSelect.addEventListener('change', () => { globalBackground.patternType = bgPatternTypeSelect.value; });
+bgPatternColorInput.addEventListener('input', () => { globalBackground.patternColor = bgPatternColorInput.value; });
+bgPatternBgInput.addEventListener('input', () => { globalBackground.patternBg = bgPatternBgInput.value; });
+bgImageUrlInput.addEventListener('input', () => {
+  globalBackground.imageUrl = bgImageUrlInput.value.trim();
+  if(!globalBackground.imageSrc && globalBackground.imageUrl){
+    bgImagePreview.innerHTML = `<img src="${escapeHtml(globalBackground.imageUrl)}">`;
+  }
+});
+bgImageFileInput.addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    globalBackground.imageSrc = await resizeImageFile(file, 800);
+    bgImagePreview.innerHTML = `<img src="${escapeHtml(globalBackground.imageSrc)}">`;
+  }catch(err){ alert('Gagal memproses gambar background.'); }
+});
+bgOpacityInput.addEventListener('input', () => {
+  bgOpacityVal.textContent = bgOpacityInput.value;
+  globalBackground.opacity = parseFloat(bgOpacityInput.value) / 100;
+});
+document.getElementById('bg-img-clear').addEventListener('click', () => {
+  globalBackground.imageSrc = null;
+  globalBackground.imageUrl = '';
+  bgImageFileInput.value = '';
+  bgImageUrlInput.value = '';
+  bgImagePreview.innerHTML = '';
+});
+
+// -- Per-kartu (override) --
+const bgOverrideCheckbox = document.getElementById('f-bg-override');
+const bgOverrideControls = document.getElementById('bg-override-controls');
+const bgOverrideTypeSelect = document.getElementById('f-bg-override-type');
+const bgOverrideSolid = document.getElementById('bg-override-solid');
+const bgOverridePattern = document.getElementById('bg-override-pattern');
+const bgOverrideImage = document.getElementById('bg-override-image');
+const bgOverrideColorInput = document.getElementById('f-bg-override-color');
+const bgOverridePatternTypeSelect = document.getElementById('f-bg-override-pattern-type');
+const bgOverridePatternColorInput = document.getElementById('f-bg-override-pattern-color');
+const bgOverridePatternBgInput = document.getElementById('f-bg-override-pattern-bg');
+const bgOverrideImageFileInput = document.getElementById('f-bg-override-image-file');
+const bgOverrideImageUrlInput = document.getElementById('f-bg-override-image-url');
+const bgOverrideImagePreview = document.getElementById('bg-override-image-preview');
+const bgOverrideOpacityInput = document.getElementById('f-bg-override-opacity');
+const bgOverrideOpacityVal = document.getElementById('bg-override-opacity-val');
+
+bgOverrideCheckbox.addEventListener('change', () => {
+  bgOverrideControls.style.display = bgOverrideCheckbox.checked ? 'block' : 'none';
+});
+bgOverrideTypeSelect.addEventListener('change', () => {
+  bgOverrideData.type = bgOverrideTypeSelect.value;
+  updateBgTypeVisibility(bgOverrideData.type, bgOverrideSolid, bgOverridePattern, bgOverrideImage);
+});
+bgOverrideColorInput.addEventListener('input', () => { bgOverrideData.solidColor = bgOverrideColorInput.value; });
+bgOverridePatternTypeSelect.addEventListener('change', () => { bgOverrideData.patternType = bgOverridePatternTypeSelect.value; });
+bgOverridePatternColorInput.addEventListener('input', () => { bgOverrideData.patternColor = bgOverridePatternColorInput.value; });
+bgOverridePatternBgInput.addEventListener('input', () => { bgOverrideData.patternBg = bgOverridePatternBgInput.value; });
+bgOverrideImageUrlInput.addEventListener('input', () => {
+  bgOverrideData.imageUrl = bgOverrideImageUrlInput.value.trim();
+  if(!bgOverrideData.imageSrc && bgOverrideData.imageUrl){
+    bgOverrideImagePreview.innerHTML = `<img src="${escapeHtml(bgOverrideData.imageUrl)}">`;
+  }
+});
+bgOverrideImageFileInput.addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    bgOverrideData.imageSrc = await resizeImageFile(file, 800);
+    bgOverrideImagePreview.innerHTML = `<img src="${escapeHtml(bgOverrideData.imageSrc)}">`;
+  }catch(err){ alert('Gagal memproses gambar background.'); }
+});
+bgOverrideOpacityInput.addEventListener('input', () => {
+  bgOverrideOpacityVal.textContent = bgOverrideOpacityInput.value;
+  bgOverrideData.opacity = parseFloat(bgOverrideOpacityInput.value) / 100;
+});
+document.getElementById('bg-override-img-clear').addEventListener('click', () => {
+  bgOverrideData.imageSrc = null;
+  bgOverrideData.imageUrl = '';
+  bgOverrideImageFileInput.value = '';
+  bgOverrideImageUrlInput.value = '';
+  bgOverrideImagePreview.innerHTML = '';
+});
+
+function resetBgOverrideForm(){
+  bgOverrideCheckbox.checked = false;
+  bgOverrideControls.style.display = 'none';
+  bgOverrideData = newBackgroundData();
+  bgOverrideData.type = 'solid';
+  bgOverrideTypeSelect.value = 'solid';
+  bgOverrideColorInput.value = bgOverrideData.solidColor;
+  bgOverridePatternTypeSelect.value = bgOverrideData.patternType;
+  bgOverridePatternColorInput.value = bgOverrideData.patternColor;
+  bgOverridePatternBgInput.value = bgOverrideData.patternBg;
+  bgOverrideImageFileInput.value = '';
+  bgOverrideImageUrlInput.value = '';
+  bgOverrideImagePreview.innerHTML = '';
+  bgOverrideOpacityInput.value = 100;
+  bgOverrideOpacityVal.textContent = '100';
+  updateBgTypeVisibility('solid', bgOverrideSolid, bgOverridePattern, bgOverrideImage);
+}
+
+// Bangun string CSS untuk layer background (dipakai baik global maupun override per-kartu)
+function backgroundLayerStyle(bg){
+  if(!bg || bg.type === 'none') return null;
+  const props = [];
+  if(bg.type === 'solid'){
+    props.push(`background-color:${bg.solidColor}`);
+  } else if(bg.type === 'pattern'){
+    const pc = bg.patternColor || '#D9D0BE';
+    const pb = bg.patternBg || '#FFFFFF';
+    props.push(`background-color:${pb}`);
+    if(bg.patternType === 'stripes'){
+      props.push(`background-image:repeating-linear-gradient(45deg, ${pc} 0, ${pc} 2px, transparent 2px, transparent 8px)`);
+    } else if(bg.patternType === 'grid'){
+      props.push(`background-image:repeating-linear-gradient(0deg, ${pc} 0, ${pc} 1px, transparent 1px, transparent 8px), repeating-linear-gradient(90deg, ${pc} 0, ${pc} 1px, transparent 1px, transparent 8px)`);
+    } else {
+      props.push(`background-image:radial-gradient(${pc} 1.2px, transparent 1.3px)`);
+      props.push(`background-size:7px 7px`);
+    }
+  } else if(bg.type === 'image'){
+    const src = bg.imageSrc || bg.imageUrl;
+    if(!src) return null;
+    const safeSrc = src.replace(/'/g, "%27").replace(/"/g, "%22");
+    props.push(`background-image:url('${safeSrc}')`);
+    props.push(`background-size:cover`);
+    props.push(`background-position:center`);
+  } else {
+    return null;
+  }
+  const opacity = bg.opacity != null ? bg.opacity : 1;
+  props.push(`opacity:${opacity}`);
+  return props.join(';');
+}
+
+function resolveCardBackground(card){
+  const bg = (card.background && card.background.type && card.background.type !== 'none') ? card.background : globalBackground;
+  return backgroundLayerStyle(bg);
+}
+
+function badgePositionCss(pos){
+  if(pos === 'top-right') return 'top:1mm;right:1mm;';
+  if(pos === 'bottom-left') return 'bottom:1mm;left:1mm;';
+  if(pos === 'bottom-right') return 'bottom:1mm;right:1mm;';
+  return 'top:1mm;left:1mm;';
+}
+
+function buildBadgeHtml(card, side){
+  if(badgeShow === 'none') return '';
+  if(badgeShow === 'front' && side !== 'front') return '';
+  if(badgeShow === 'back' && side !== 'back') return '';
+  if(!card.group) return '';
+  const st = getGroupStyle(card.group);
+  return `<div class="pc-badge" style="${badgePositionCss(badgePosition)}background:${st.bg};color:${st.text};font-family:${st.font};">${escapeHtml(card.group)}</div>`;
+}
+
+function buildBgLayerHtml(card){
+  const style = resolveCardBackground(card);
+  return style ? `<div class="pc-bg" style="${style}"></div>` : '';
+}
+
+// ---------- Daftar contoh kalimat (dinamis, bisa lebih dari satu per kartu) ----------
+function renderExampleRows(){
+  if(currentExamples.length === 0){
+    exampleListEl.innerHTML = '';
+    return;
+  }
+  exampleListEl.innerHTML = currentExamples.map((ex, i) => `
+    <div class="example-row" data-idx="${i}">
+      <button type="button" class="example-remove" data-idx="${i}" title="Hapus contoh ini">✕</button>
+      <p class="example-label">Kalimat (JP)</p>
+      <input type="text" class="example-jp" data-idx="${i}" placeholder="毎日[まいにち] 学校[がっこう]に 行[い]きます" value="${escapeHtml(ex.jp)}">
+      <p class="example-label">Arti kalimat ini</p>
+      <input type="text" class="example-meaning" data-idx="${i}" placeholder="setiap hari saya pergi ke sekolah" value="${escapeHtml(ex.meaning)}">
+    </div>
+  `).join('');
+}
+
+addExampleBtn.addEventListener('click', () => {
+  currentExamples.push({jp:'', meaning:''});
+  renderExampleRows();
+  const rows = exampleListEl.querySelectorAll('.example-jp');
+  if(rows.length) rows[rows.length - 1].focus();
+});
+
+exampleListEl.addEventListener('input', e => {
+  const idx = parseInt(e.target.dataset.idx, 10);
+  if(Number.isNaN(idx) || !currentExamples[idx]) return;
+  if(e.target.classList.contains('example-jp')) currentExamples[idx].jp = e.target.value;
+  if(e.target.classList.contains('example-meaning')) currentExamples[idx].meaning = e.target.value;
+});
+
+exampleListEl.addEventListener('click', e => {
+  if(e.target.classList.contains('example-remove')){
+    const idx = parseInt(e.target.dataset.idx, 10);
+    currentExamples.splice(idx, 1);
+    renderExampleRows();
+  }
+});
+
+// Mode kartu: "umum" (front/back bebas teks/gambar) atau "kanji" (front kanji+furigana,
+// back arti + contoh kalimat, tanpa opsi gambar/cara-baca terpisah karena sudah terwakili furigana)
+let cardMode = 'umum';
+const frontKanjiLabel = document.getElementById('front-kanji-label');
+
+function setCardMode(mode){
+  cardMode = mode;
+  document.querySelectorAll('#card-mode-toggle .type-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  const isKanji = mode === 'kanji';
+  document.getElementById('kanji-mode-hint').style.display = isKanji ? 'block' : 'none';
+  document.getElementById('front-type-toggle').style.display = isKanji ? 'none' : 'flex';
+  document.getElementById('back-type-toggle').style.display = isKanji ? 'none' : 'flex';
+  document.getElementById('back-reading-block').style.display = isKanji ? 'none' : 'block';
+  document.getElementById('back-example-block').style.display = isKanji ? 'block' : 'none';
+
+  if(isKanji){
+    setSideType('front', 'text');
+    setSideType('back', 'text');
+    frontKanjiLabel.textContent = 'Kanji + furigana (depan)';
+    kanjiInput.placeholder = '学校[がっこう]';
+  } else {
+    frontKanjiLabel.textContent = 'Kanji (depan)';
+    kanjiInput.placeholder = '学';
+  }
+}
+
+document.querySelectorAll('#card-mode-toggle .type-btn').forEach(btn => {
+  btn.addEventListener('click', () => setCardMode(btn.dataset.mode));
+});
+
+// Ubah tampilan/ state toggle Teks-Gambar untuk satu sisi ("front"/"back")
+function setSideType(side, type){
+  if(side === 'front') frontType = type; else backType = type;
+  document.querySelectorAll(`.type-btn[data-side="${side}"]`).forEach(b => {
+    b.classList.toggle('active', b.dataset.type === type);
+  });
+  document.getElementById(side + '-text-fields').style.display = type === 'text' ? 'block' : 'none';
+  document.getElementById(side + '-image-fields').style.display = type === 'image' ? 'block' : 'none';
+}
+
+document.querySelectorAll('.type-btn[data-side]').forEach(btn => {
+  btn.addEventListener('click', () => setSideType(btn.dataset.side, btn.dataset.type));
+});
+
+// Resize gambar upload lewat canvas, maks 800px di sisi terpanjang, lalu jadikan dataURL
+function resizeImageFile(file, maxSize){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let {width, height} = img;
+        if(width > height){
+          if(width > maxSize){ height = Math.round(height * maxSize / width); width = maxSize; }
+        } else {
+          if(height > maxSize){ width = Math.round(width * maxSize / height); height = maxSize; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = () => reject(new Error('Gagal memuat gambar.'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('Gagal membaca file.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+frontImageFileInput.addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    frontImageData = await resizeImageFile(file, 800);
+    frontImgPreview.innerHTML = `<img src="${escapeHtml(frontImageData)}">`;
+  }catch(err){
+    alert('Gagal memproses gambar depan.');
+  }
+});
+backImageFileInput.addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    backImageData = await resizeImageFile(file, 800);
+    backImgPreview.innerHTML = `<img src="${escapeHtml(backImageData)}">`;
+  }catch(err){
+    alert('Gagal memproses gambar belakang.');
+  }
+});
+frontImageUrlInput.addEventListener('input', () => {
+  const val = frontImageUrlInput.value.trim();
+  if(val && !frontImageData){ frontImgPreview.innerHTML = `<img src="${escapeHtml(val)}">`; }
+  if(!val && !frontImageData){ frontImgPreview.innerHTML = ''; }
+});
+backImageUrlInput.addEventListener('input', () => {
+  const val = backImageUrlInput.value.trim();
+  if(val && !backImageData){ backImgPreview.innerHTML = `<img src="${escapeHtml(val)}">`; }
+  if(!val && !backImageData){ backImgPreview.innerHTML = ''; }
+});
+document.getElementById('front-img-clear').addEventListener('click', () => {
+  frontImageData = null;
+  frontImageFileInput.value = '';
+  frontImageUrlInput.value = '';
+  frontImgPreview.innerHTML = '';
+});
+document.getElementById('back-img-clear').addEventListener('click', () => {
+  backImageData = null;
+  backImageFileInput.value = '';
+  backImageUrlInput.value = '';
+  backImgPreview.innerHTML = '';
+});
+
+// Sisi depan/belakang: file upload diprioritaskan kalau dua-duanya diisi
+function currentFrontImageSrc(){
+  return frontImageData || frontImageUrlInput.value.trim() || null;
+}
+function currentBackImageSrc(){
+  return backImageData || backImageUrlInput.value.trim() || null;
+}
+
 function enterEditMode(i){
   editIndex = i;
   const c = cards[i];
-  kanjiInput.value = c.kanji;
-  readingInput.value = c.reading || '';
-  meaningInput.value = c.meaning;
+
+  setCardMode(c.mode === 'kanji' ? 'kanji' : 'umum');
+
+  // Grup aktif ikut disesuaikan ke grup kartu ini — kalau mau pindahkan kartu
+  // ke grup lain, tinggal ganti "Grup aktif" sebelum klik "Simpan perubahan".
+  ensureGroupExists(c.group || '');
+  updateGroupSelectOptions();
+  groupActiveSelect.value = c.group || '';
+  activeGroup = groupActiveSelect.value;
+  updateActiveGroupIndicator();
+  renderGroupList();
+
+  // Background khusus kartu ini (kalau ada) dimuat ke form override
+  if(c.background && c.background.type && c.background.type !== 'none'){
+    bgOverrideCheckbox.checked = true;
+    bgOverrideControls.style.display = 'block';
+    bgOverrideData = Object.assign(newBackgroundData(), c.background);
+    bgOverrideTypeSelect.value = bgOverrideData.type;
+    bgOverrideColorInput.value = bgOverrideData.solidColor;
+    bgOverridePatternTypeSelect.value = bgOverrideData.patternType;
+    bgOverridePatternColorInput.value = bgOverrideData.patternColor;
+    bgOverridePatternBgInput.value = bgOverrideData.patternBg;
+    bgOverrideImageUrlInput.value = bgOverrideData.imageSrc ? '' : (bgOverrideData.imageUrl || '');
+    bgOverrideImagePreview.innerHTML = (bgOverrideData.imageSrc || bgOverrideData.imageUrl) ? `<img src="${escapeHtml(bgOverrideData.imageSrc || bgOverrideData.imageUrl)}">` : '';
+    bgOverrideOpacityInput.value = Math.round((bgOverrideData.opacity != null ? bgOverrideData.opacity : 1) * 100);
+    bgOverrideOpacityVal.textContent = bgOverrideOpacityInput.value;
+    updateBgTypeVisibility(bgOverrideData.type, bgOverrideSolid, bgOverridePattern, bgOverrideImage);
+  } else {
+    resetBgOverrideForm();
+  }
+
+  setSideType('front', c.front.type);
+  if(c.front.type === 'text'){
+    kanjiInput.value = c.front.text || '';
+  } else {
+    frontImageData = c.front.src && c.front.src.startsWith('data:') ? c.front.src : null;
+    frontImageUrlInput.value = frontImageData ? '' : (c.front.src || '');
+    frontImgPreview.innerHTML = c.front.src ? `<img src="${escapeHtml(c.front.src)}">` : '';
+  }
+
+  setSideType('back', c.back.type);
+  if(c.back.type === 'text'){
+    readingInput.value = c.back.reading || '';
+    meaningInput.value = c.back.text || '';
+    currentExamples = (c.back.examples || []).map(ex => ({jp: ex.jp || '', meaning: ex.meaning || ''}));
+    renderExampleRows();
+  } else {
+    backImageData = c.back.src && c.back.src.startsWith('data:') ? c.back.src : null;
+    backImageUrlInput.value = backImageData ? '' : (c.back.src || '');
+    backImgPreview.innerHTML = c.back.src ? `<img src="${escapeHtml(c.back.src)}">` : '';
+  }
+
   addBtn.textContent = 'Simpan perubahan';
   editNote.classList.add('active');
   editIndexLabel.textContent = i + 1;
-  kanjiInput.focus();
   render();
+}
+
+function resetForm(){
+  kanjiInput.value = '';
+  readingInput.value = '';
+  meaningInput.value = '';
+  currentExamples = [];
+  renderExampleRows();
+  resetBgOverrideForm();
+  frontImageData = null;
+  backImageData = null;
+  frontImageFileInput.value = '';
+  backImageFileInput.value = '';
+  frontImageUrlInput.value = '';
+  backImageUrlInput.value = '';
+  frontImgPreview.innerHTML = '';
+  backImgPreview.innerHTML = '';
+  setSideType('front', 'text');
+  setSideType('back', 'text');
+  setCardMode(cardMode); // pertahankan mode saat ini (umum/kanji) — cuma refresh tampilan togglenya
 }
 
 function exitEditMode(){
   editIndex = null;
   addBtn.textContent = 'Tambahkan kartu';
   editNote.classList.remove('active');
-  kanjiInput.value = '';
-  readingInput.value = '';
-  meaningInput.value = '';
+  resetForm();
 }
 
 cancelEditBtn.addEventListener('click', () => {
@@ -542,26 +1434,132 @@ cancelEditBtn.addEventListener('click', () => {
 function render(){
   if(cards.length === 0){
     listEl.innerHTML = '<div class="empty">Belum ada kartu. Tambahkan lewat form di sebelah kiri.</div>';
-  } else {
-    listEl.innerHTML = cards.map((c,i) => `
+    countLabel.textContent = '0 kartu';
+    return;
+  }
+
+  function cardRowHtml(c, i){
+    const frontHtml = c.front.type === 'image'
+      ? `<img class="row-thumb" src="${escapeHtml(c.front.src)}" alt="">`
+      : `<div class="kj">${renderFuriganaHtml(c.front.text)}</div>`;
+    const backHtml = c.back.type === 'image'
+      ? `<img class="row-thumb" src="${escapeHtml(c.back.src)}" alt="">`
+      : `<div class="meta">
+          <p class="reading">${escapeHtml(c.back.reading || '')}</p>
+          <p class="meaning">${escapeHtml(c.back.text)}</p>
+          ${(c.back.examples || []).map(ex => `
+            <p class="example">${renderFuriganaHtml(ex.jp)}${ex.meaning ? ` <span class="ex-mn-inline">— ${escapeHtml(ex.meaning)}</span>` : ''}</p>
+          `).join('')}
+        </div>`;
+    return `
       <div class="card-row${i === editIndex ? ' editing' : ''}">
-        <div class="kj">${escapeHtml(c.kanji)}</div>
-        <div class="meta">
-          <p class="reading">${escapeHtml(c.reading || '')}</p>
-          <p class="meaning">${escapeHtml(c.meaning)}</p>
-        </div>
+        ${frontHtml}
+        ${backHtml}
         <div class="row-actions">
           <button class="edit" data-i="${i}">Ubah</button>
           <button class="del" data-i="${i}">Hapus</button>
         </div>
-      </div>
-    `).join('');
+      </div>`;
   }
+
+  // Kelompokkan index kartu per grup: urutan ikut daftar grup terdaftar dulu,
+  // lalu grup "yatim" (ada di kartu tapi sudah dihapus dari daftar grup), lalu tanpa grup
+  const buckets = new Map();
+  cards.forEach((c, i) => {
+    const key = c.group || '';
+    if(!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(i);
+  });
+
+  const orderedNames = [];
+  groups.forEach(g => { if(buckets.has(g.name)) orderedNames.push(g.name); });
+  buckets.forEach((_, name) => { if(name && !orderedNames.includes(name)) orderedNames.push(name); });
+
+  let html = '';
+  orderedNames.forEach(name => {
+    const idxs = buckets.get(name);
+    const st = getGroupStyle(name);
+    html += `
+      <details class="group-section" open>
+        <summary>
+          <span class="swatch" style="background:${st.bg};"></span>
+          <span class="name">${escapeHtml(name)}</span>
+          <span class="n">${idxs.length} kartu</span>
+        </summary>
+        ${idxs.map(i => cardRowHtml(cards[i], i)).join('')}
+      </details>`;
+  });
+  if(buckets.has('')){
+    const idxs = buckets.get('');
+    html += `
+      <details class="group-section" open>
+        <summary>
+          <span class="swatch" style="background:#ccc;"></span>
+          <span class="name">Tanpa grup</span>
+          <span class="n">${idxs.length} kartu</span>
+        </summary>
+        ${idxs.map(i => cardRowHtml(cards[i], i)).join('')}
+      </details>`;
+  }
+
+  listEl.innerHTML = html;
   countLabel.textContent = cards.length + ' kartu';
+}
+
+// Kompatibel mundur: kartu format lama {kanji, reading, meaning} -> format baru front/back,
+// field "example" tunggal (versi lama) -> "examples" array, dan pastikan field group/background ada
+function normalizeCard(c){
+  if(!(c && c.front && c.back)){
+    c = {
+      front: {type:'text', text: (c && c.kanji) || ''},
+      back: {type:'text', reading: (c && c.reading) || '', text: (c && c.meaning) || ''}
+    };
+  }
+  if(c.back && c.back.type === 'text' && !Array.isArray(c.back.examples)){
+    c.back.examples = (typeof c.back.example === 'string' && c.back.example.trim())
+      ? [{jp: c.back.example, meaning: ''}]
+      : [];
+  }
+  if(typeof c.group !== 'string') c.group = '';
+  if(!c.background) c.background = null;
+  return c;
 }
 
 function escapeHtml(s){
   return (s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* ---------- Furigana: notasi kanji[furigana] ---------- */
+// Hanya karakter kanji (CJK ideograph) yang langsung diikuti "[...]" yang dianggap
+// pasangan furigana; kana/romaji/tanda baca di sekitarnya tetap teks biasa apa adanya.
+const FURIGANA_RE = /([\u3005\u4E00-\u9FFF\u3400-\u4DBF]+)\[([^\[\]]+)\]/g;
+
+function parseFurigana(raw){
+  const text = raw || '';
+  const segments = [];
+  let lastIndex = 0;
+  let m;
+  FURIGANA_RE.lastIndex = 0;
+  while((m = FURIGANA_RE.exec(text)) !== null){
+    if(m.index > lastIndex) segments.push({plain: text.slice(lastIndex, m.index)});
+    segments.push({base: m[1], furi: m[2]});
+    lastIndex = FURIGANA_RE.lastIndex;
+  }
+  if(lastIndex < text.length) segments.push({plain: text.slice(lastIndex)});
+  return segments;
+}
+
+// Panjang tampilan efektif (tanpa notasi kurung furigana) — dipakai untuk auto-sizing
+function furiganaVisualLength(raw){
+  return parseFurigana(raw).reduce((sum, s) => sum + (s.plain !== undefined ? s.plain.length : s.base.length), 0);
+}
+
+// Render ke HTML: pasangan kanji[furigana] jadi <ruby>, sisanya teks biasa (di-escape)
+function renderFuriganaHtml(raw){
+  return parseFurigana(raw).map(s => {
+    if(s.plain !== undefined) return escapeHtml(s.plain);
+    return `<ruby>${escapeHtml(s.base)}<rt>${escapeHtml(s.furi)}</rt></ruby>`;
+  }).join('');
 }
 
 const fontKanjiSelect = document.getElementById('font-kanji-select');
@@ -741,22 +1739,135 @@ colsSelect.addEventListener('change', renderHolePreview);
 
 renderHolePreview();
 
-addBtn.addEventListener('click', () => {
-  const kanji = kanjiInput.value.trim();
-  const reading = readingInput.value.trim();
-  const meaning = meaningInput.value.trim();
-  if(!kanji || !meaning){
-    alert('Isi kanji dan arti dulu ya.');
-    return;
+/* ---------- Watermark / kredit pembuat ---------- */
+let watermark = {
+  enabled: false,
+  text: '',
+  logoSrc: null,   // dataURL hasil resize dari file upload
+  logoUrl: '',     // atau URL yang ditempel
+  placement: 'footer', // 'card' (pojok tiap kartu) | 'footer' (footer halaman)
+  position: 'bottom-right', // dipakai kalau placement === 'card'
+  opacity: 0.55,
+  size: 2.5, // mm
+};
+
+const wmEnableCheckbox = document.getElementById('f-wm-enable');
+const wmControls = document.getElementById('wm-controls');
+const wmTextInput = document.getElementById('f-wm-text');
+const wmLogoFileInput = document.getElementById('f-wm-logo-file');
+const wmLogoUrlInput = document.getElementById('f-wm-logo-url');
+const wmLogoPreview = document.getElementById('wm-logo-preview');
+const wmLogoClearBtn = document.getElementById('wm-logo-clear');
+const wmPlacementSelect = document.getElementById('f-wm-placement');
+const wmCardPositionWrap = document.getElementById('wm-card-position-wrap');
+const wmPositionSelect = document.getElementById('f-wm-position');
+const wmOpacityInput = document.getElementById('f-wm-opacity');
+const wmOpacityVal = document.getElementById('wm-opacity-val');
+const wmSizeInput = document.getElementById('f-wm-size');
+const wmSizeVal = document.getElementById('wm-size-val');
+
+wmEnableCheckbox.addEventListener('change', () => {
+  watermark.enabled = wmEnableCheckbox.checked;
+  wmControls.style.display = watermark.enabled ? 'block' : 'none';
+});
+wmTextInput.addEventListener('input', () => { watermark.text = wmTextInput.value; });
+wmLogoFileInput.addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    watermark.logoSrc = await resizeImageFile(file, 300);
+    wmLogoPreview.innerHTML = `<img src="${escapeHtml(watermark.logoSrc)}">`;
+  }catch(err){ alert('Gagal memproses logo watermark.'); }
+});
+wmLogoUrlInput.addEventListener('input', () => {
+  watermark.logoUrl = wmLogoUrlInput.value.trim();
+  if(!watermark.logoSrc && watermark.logoUrl){
+    wmLogoPreview.innerHTML = `<img src="${escapeHtml(watermark.logoUrl)}">`;
   }
+  if(!watermark.logoSrc && !watermark.logoUrl){
+    wmLogoPreview.innerHTML = '';
+  }
+});
+wmLogoClearBtn.addEventListener('click', () => {
+  watermark.logoSrc = null;
+  watermark.logoUrl = '';
+  wmLogoFileInput.value = '';
+  wmLogoUrlInput.value = '';
+  wmLogoPreview.innerHTML = '';
+});
+wmPlacementSelect.addEventListener('change', () => {
+  watermark.placement = wmPlacementSelect.value;
+  wmCardPositionWrap.style.display = watermark.placement === 'card' ? 'block' : 'none';
+});
+wmPositionSelect.addEventListener('change', () => { watermark.position = wmPositionSelect.value; });
+wmOpacityInput.addEventListener('input', () => {
+  wmOpacityVal.textContent = wmOpacityInput.value;
+  watermark.opacity = parseFloat(wmOpacityInput.value) / 100;
+});
+wmSizeInput.addEventListener('input', () => {
+  wmSizeVal.textContent = wmSizeInput.value;
+  watermark.size = parseFloat(wmSizeInput.value);
+});
+
+// Konten watermark (logo + teks), dipakai baik untuk versi per-kartu maupun footer halaman
+function watermarkContentHtml(){
+  const parts = [];
+  const logoSrc = watermark.logoSrc || watermark.logoUrl;
+  if(logoSrc) parts.push(`<img src="${escapeHtml(logoSrc)}" alt="">`);
+  if(watermark.text && watermark.text.trim()) parts.push(`<span>${escapeHtml(watermark.text.trim())}</span>`);
+  return parts.join('');
+}
+
+function buildWatermarkCardHtml(){
+  if(!watermark.enabled || watermark.placement !== 'card') return '';
+  const content = watermarkContentHtml();
+  if(!content) return '';
+  return `<div class="pc-watermark" style="${badgePositionCss(watermark.position)}opacity:${watermark.opacity};font-size:${watermark.size}mm;">${content}</div>`;
+}
+
+function buildWatermarkFooterHtml(){
+  if(!watermark.enabled || watermark.placement !== 'footer') return '';
+  const content = watermarkContentHtml();
+  if(!content) return '';
+  return `<div class="watermark-footer" style="opacity:${watermark.opacity};font-size:${watermark.size}mm;">${content}</div>`;
+}
+
+addBtn.addEventListener('click', () => {
+  let front, back;
+
+  if(frontType === 'text'){
+    const text = kanjiInput.value.trim();
+    if(!text){ alert('Isi kanji (depan) dulu ya.'); return; }
+    front = {type:'text', text};
+  } else {
+    const src = currentFrontImageSrc();
+    if(!src){ alert('Upload atau isi URL gambar untuk sisi depan dulu ya.'); return; }
+    front = {type:'image', src};
+  }
+
+  if(backType === 'text'){
+    const meaning = meaningInput.value.trim();
+    const reading = readingInput.value.trim();
+    const examples = currentExamples
+      .map(ex => ({jp: ex.jp.trim(), meaning: ex.meaning.trim()}))
+      .filter(ex => ex.jp);
+    if(!meaning){ alert('Isi arti (belakang) dulu ya.'); return; }
+    back = {type:'text', reading, text: meaning, examples};
+  } else {
+    const src = currentBackImageSrc();
+    if(!src){ alert('Upload atau isi URL gambar untuk sisi belakang dulu ya.'); return; }
+    back = {type:'image', src};
+  }
+
+  const group = activeGroup || '';
+  const background = bgOverrideCheckbox.checked ? Object.assign({}, bgOverrideData) : null;
+
   if(editIndex !== null){
-    cards[editIndex] = {kanji, reading, meaning};
+    cards[editIndex] = {front, back, mode: cardMode, group, background};
     exitEditMode();
   } else {
-    cards.push({kanji, reading, meaning});
-    kanjiInput.value = '';
-    readingInput.value = '';
-    meaningInput.value = '';
+    cards.push({front, back, mode: cardMode, group, background});
+    resetForm();
   }
   kanjiInput.focus();
   render();
@@ -784,7 +1895,14 @@ listEl.addEventListener('click', e => {
 });
 
 document.getElementById('export-btn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(cards, null, 2)], {type:'application/json'});
+  const exportData = {
+    cards,
+    groups,
+    badgePosition,
+    badgeShow,
+    watermark
+  };
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -803,13 +1921,73 @@ document.getElementById('import-file').addEventListener('change', e => {
   reader.onload = evt => {
     try{
       const data = JSON.parse(evt.target.result);
+
+      // Format lama: file JSON cuma berisi array kartu langsung (tanpa data grup).
+      // Format baru: { cards, groups, badgePosition, badgeShow }.
+      let importedCards, importedGroups = null;
       if(Array.isArray(data)){
-        cards = data;
-        exitEditMode();
-        render();
+        importedCards = data;
+      } else if(data && Array.isArray(data.cards)){
+        importedCards = data.cards;
+        if(Array.isArray(data.groups)) importedGroups = data.groups;
       } else {
         alert('Format file tidak dikenali.');
+        return;
       }
+
+      cards = importedCards.map(normalizeCard);
+
+      if(importedGroups){
+        // Pulihkan grup lengkap dengan warna/font-nya (bukan cuma nama)
+        groups = importedGroups
+          .filter(g => g && typeof g.name === 'string' && g.name)
+          .map(g => ({
+            name: g.name,
+            bg: g.bg || pickGroupColor(),
+            text: g.text || '#FFFFFF',
+            font: g.font || "'Zen Kaku Gothic New', sans-serif"
+          }));
+      } else {
+        groups = [];
+      }
+      // Pastikan tetap ada entri grup untuk kartu yang grupnya tidak ikut terdaftar
+      cards.forEach(c => ensureGroupExists(c.group));
+
+      if(data && !Array.isArray(data)){
+        if(typeof data.badgePosition === 'string'){
+          badgePosition = data.badgePosition;
+          badgePositionSelect.value = badgePosition;
+        }
+        if(typeof data.badgeShow === 'string'){
+          badgeShow = data.badgeShow;
+          badgeShowSelect.value = badgeShow;
+        }
+        if(data.watermark && typeof data.watermark === 'object'){
+          watermark = Object.assign({
+            enabled:false, text:'', logoSrc:null, logoUrl:'',
+            placement:'footer', position:'bottom-right', opacity:0.55, size:2.5
+          }, data.watermark);
+          wmEnableCheckbox.checked = !!watermark.enabled;
+          wmControls.style.display = watermark.enabled ? 'block' : 'none';
+          wmTextInput.value = watermark.text || '';
+          wmLogoUrlInput.value = watermark.logoSrc ? '' : (watermark.logoUrl || '');
+          wmLogoPreview.innerHTML = (watermark.logoSrc || watermark.logoUrl)
+            ? `<img src="${escapeHtml(watermark.logoSrc || watermark.logoUrl)}">`
+            : '';
+          wmPlacementSelect.value = watermark.placement;
+          wmCardPositionWrap.style.display = watermark.placement === 'card' ? 'block' : 'none';
+          wmPositionSelect.value = watermark.position;
+          wmOpacityInput.value = Math.round(watermark.opacity * 100);
+          wmOpacityVal.textContent = wmOpacityInput.value;
+          wmSizeInput.value = watermark.size;
+          wmSizeVal.textContent = watermark.size;
+        }
+      }
+
+      updateGroupSelectOptions();
+      renderGroupList();
+      exitEditMode();
+      render();
     }catch(err){
       alert('Gagal membaca file JSON.');
     }
@@ -934,20 +2112,13 @@ function cellSizeMm(cols, rows, pageW, pageH, gap){
 }
 
 function autoKanjiSizeMm(text, cellW, cellH){
-  const len = Math.max((text || '').length, 1);
+  const hasFuri = /\[[^\[\]]+\]/.test(text || '');
+  const len = Math.max(furiganaVisualLength(text), 1);
+  const effCellH = hasFuri ? cellH * 0.78 : cellH; // sisakan ruang untuk furigana di atas
   let size = (cellW * 0.85) / len;   // asumsi tiap karakter kira-kira selebar 1 em
-  size = Math.min(size, cellH * 0.6);
+  size = Math.min(size, effCellH * 0.6);
   size = Math.max(size, 3);
   size = Math.min(size, 30);
-  return size;
-}
-
-function autoMeaningSizeMm(text, cellW, cellH){
-  const len = Math.max((text || '').length, 1);
-  let size = Math.sqrt((cellW * cellH * 1.1) / len);
-  size = Math.max(size, 3);
-  size = Math.min(size, cellH * 0.32);
-  size = Math.min(size, 8);
   return size;
 }
 
@@ -961,10 +2132,11 @@ function fitCjkSizeMm(text, maxSize, cellW, cellH){
   return size;
 }
 
-// Ukuran untuk teks Latin (arti) - boleh melipat ke beberapa baris, dihitung
-// betulan muat atau tidak di dalam sel, bukan cuma tebakan kasar
+// Ukuran untuk teks Latin (arti/contoh) - boleh melipat ke beberapa baris, dihitung
+// betulan muat atau tidak di dalam sel, bukan cuma tebakan kasar. Panjang teks dihitung
+// tanpa notasi kurung furigana supaya kartu berfurigana tidak jadi lebih kecil dari harusnya.
 function fitLatinSizeMm(text, maxSize, cellW, cellH){
-  const len = Math.max((text || '').length, 1);
+  const len = Math.max(furiganaVisualLength(text), 1);
   const charW = 0.52;   // perkiraan lebar rata-rata 1 karakter relatif ke font-size
   const lineH = 1.2;
   function neededHeight(sz){
@@ -1001,6 +2173,23 @@ function buildPrintArea(){
   const pageH = paper.h - margins.top - margins.bottom;
   const {w: cellW, h: cellH} = cellSizeMm(cols, rows, pageW, pageH, gap);
 
+  // Ukuran font "contoh kalimat" dihitung SATU KALI untuk seluruh dek (bukan per-kartu),
+  // berdasarkan contoh terpanjang — supaya seragam waktu dicetak bolak-balik.
+  const exampleUsableW = cellW * 0.9;
+  const exampleBudgetH = cellH * 0.28;
+  const exampleMaxCap = manualSizeCheckbox.checked
+    ? Math.min(parseFloat(sizeMeaningInput.value) * 0.7, 4.5)
+    : 4.5;
+  const cardsWithExample = cards.filter(c => c.back.type === 'text' && c.back.examples && c.back.examples.length);
+  const deckExampleSize = cardsWithExample.length
+    ? Math.min(...cardsWithExample.map(c => {
+        // Gabungkan semua kalimat contoh kartu ini jadi satu teks supaya makin
+        // banyak contohnya, makin kecil otomatis ukurannya (tetap muat semua).
+        const combined = c.back.examples.map(ex => `${ex.jp} ${ex.meaning}`).join('  ');
+        return fitLatinSizeMm(combined, exampleMaxCap, exampleUsableW, exampleBudgetH * c.back.examples.length);
+      }))
+    : exampleMaxCap;
+
   // Panduan lubang plong di dalam tiap kartu (bukan di lembar kertas)
   const cellHolesHtml = holeOpts.show
     ? buildHoles(cellW, cellH, holeOpts.side, holeOpts.count, holeOpts.offset, holeOpts.diameter, holeOpts.inset)
@@ -1034,6 +2223,13 @@ function buildPrintArea(){
     grid.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
     page.appendChild(grid);
 
+    const footerHtml = buildWatermarkFooterHtml();
+    if(footerHtml){
+      const footerWrap = document.createElement('div');
+      footerWrap.innerHTML = footerHtml;
+      page.appendChild(footerWrap.firstElementChild);
+    }
+
     return {page, grid};
   }
 
@@ -1041,10 +2237,19 @@ function buildPrintArea(){
     // Halaman depan (kanji saja, tanpa romaji/cara baca)
     const {page: frontPage, grid: front} = newPage();
     pageCards.forEach(c => {
-      const kjSize = autoKanjiSizeMm(c.kanji, cellW, cellH).toFixed(1);
+      let inner;
+      if(c.front.type === 'image'){
+        inner = `<img class="pc-img" src="${escapeHtml(c.front.src)}" alt="">`;
+      } else {
+        const kjSize = autoKanjiSizeMm(c.front.text, cellW, cellH).toFixed(1);
+        inner = `<div class="kj" style="font-size:${kjSize}mm;">${renderFuriganaHtml(c.front.text)}</div>`;
+      }
       front.innerHTML += `
         <div class="pc">
-          <div class="kj" style="font-size:${kjSize}mm;">${escapeHtml(c.kanji)}</div>
+          ${buildBgLayerHtml(c)}
+          ${inner}
+          ${buildBadgeHtml(c, 'front')}
+          ${buildWatermarkCardHtml()}
           ${holesLayerHtml}
         </div>`;
     });
@@ -1068,23 +2273,45 @@ function buildPrintArea(){
       const fullRow = paddedRow.slice().reverse();
       fullRow.forEach(c => {
         if(c){
-          let mnSize, rdSize;
-          const readingBudgetH = cellH * 0.34;
-          const meaningBudgetH = cellH * 0.6;
-          const usableW = cellW * 0.9;
-          if(manualSizeCheckbox.checked){
-            // Ukuran manual jadi batas maksimum — kalau teks kepanjangan untuk
-            // ukuran itu, kartu tersebut sendiri yang mengecil sedikit supaya
-            // tetap muat penuh, tanpa memotong kata di tengah.
-            rdSize = fitCjkSizeMm(c.reading, parseFloat(sizeReadingInput.value), usableW, readingBudgetH).toFixed(1);
-            mnSize = fitLatinSizeMm(c.meaning, parseFloat(sizeMeaningInput.value), usableW, meaningBudgetH).toFixed(1);
+          let inner;
+          if(c.back.type === 'image'){
+            inner = `<img class="pc-img" src="${escapeHtml(c.back.src)}" alt="">`;
           } else {
-            mnSize = fitLatinSizeMm(c.meaning, 8, usableW, meaningBudgetH).toFixed(1);
-            rdSize = fitCjkSizeMm(c.reading, Math.min(parseFloat(mnSize) * 0.9, 6), usableW, readingBudgetH).toFixed(1);
+            let mnSize, rdSize, exSize;
+            const hasExample = !!(c.back.examples && c.back.examples.length);
+            const readingBudgetH = cellH * (hasExample ? 0.20 : 0.34);
+            const meaningBudgetH = cellH * (hasExample ? 0.38 : 0.60);
+            const usableW = cellW * 0.9;
+            if(manualSizeCheckbox.checked){
+              // Ukuran manual jadi batas maksimum — kalau teks kepanjangan untuk
+              // ukuran itu, kartu tersebut sendiri yang mengecil sedikit supaya
+              // tetap muat penuh, tanpa memotong kata di tengah.
+              rdSize = fitCjkSizeMm(c.back.reading, parseFloat(sizeReadingInput.value), usableW, readingBudgetH).toFixed(1);
+              mnSize = fitLatinSizeMm(c.back.text, parseFloat(sizeMeaningInput.value), usableW, meaningBudgetH).toFixed(1);
+            } else {
+              mnSize = fitLatinSizeMm(c.back.text, 8, usableW, meaningBudgetH).toFixed(1);
+              rdSize = fitCjkSizeMm(c.back.reading, Math.min(parseFloat(mnSize) * 0.9, 6), usableW, readingBudgetH).toFixed(1);
+            }
+            exSize = hasExample ? deckExampleSize.toFixed(1) : '0';
+            const exampleHtml = hasExample
+              ? `<div class="ex-wrap">${c.back.examples.map(ex => `
+                  <div class="ex" style="font-size:${exSize}mm;">
+                    <div class="ex-jp">${renderFuriganaHtml(ex.jp)}</div>
+                    ${ex.meaning ? `<div class="ex-mn">${escapeHtml(ex.meaning)}</div>` : ''}
+                  </div>
+                `).join('')}</div>`
+              : '';
+            inner = `
+              ${c.back.reading ? `<div class="rd-back" style="font-size:${rdSize}mm;">${escapeHtml(c.back.reading)}</div>` : ''}
+              <div class="mn" style="font-size:${mnSize}mm;">${escapeHtml(c.back.text)}</div>
+              ${exampleHtml}
+            `;
           }
           back.innerHTML += `<div class="pc">
-            ${c.reading ? `<div class="rd-back" style="font-size:${rdSize}mm;">${escapeHtml(c.reading)}</div>` : ''}
-            <div class="mn" style="font-size:${mnSize}mm;">${escapeHtml(c.meaning)}</div>
+            ${buildBgLayerHtml(c)}
+            ${inner}
+            ${buildBadgeHtml(c, 'back')}
+            ${buildWatermarkCardHtml()}
             ${holesLayerHtml}
           </div>`;
         } else {
