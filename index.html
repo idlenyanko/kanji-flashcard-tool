@@ -155,9 +155,85 @@
     padding:12px;display:flex;justify-content:center;align-items:center;
     background:#FAFAF6;
   }
+
+  /* ---- Menu dropdown (accordion) untuk panel kontrol ---- */
+  .ctrl-group{
+    border:1px solid var(--line);border-radius:2px;margin-bottom:10px;
+    background:var(--paper-2);overflow:hidden;
+  }
+  .ctrl-group + .ctrl-group{margin-top:10px;}
+  .ctrl-group summary{
+    list-style:none;cursor:pointer;user-select:none;
+    padding:12px 14px;font-size:13px;font-weight:700;letter-spacing:.02em;
+    color:var(--ink);display:flex;align-items:center;justify-content:space-between;
+    background:#FAF7EF;
+  }
+  .ctrl-group summary::-webkit-details-marker{display:none;}
+  .ctrl-group summary::after{
+    content:'▾';color:var(--ink-soft);font-size:11px;transition:transform .15s ease;
+    margin-left:10px;flex-shrink:0;
+  }
+  .ctrl-group[open] summary::after{transform:rotate(180deg);}
+  .ctrl-group summary:hover{background:#F2EBDA;}
+  .ctrl-group[open] summary{border-bottom:1px solid var(--line);}
+  .ctrl-group .ctrl-body{padding:16px 14px;}
+  .ctrl-group .ctrl-body label:first-of-type{margin-top:0;}
+
+  .print-topbar{
+    position:sticky;top:0;z-index:100;
+    background:var(--paper);border-bottom:2px solid var(--ink);
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
+  }
+  .print-topbar-inner{
+    max-width:960px;margin:0 auto;padding:14px 24px;
+    display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+  }
+  .print-topbar-inner .btn{white-space:nowrap;flex-shrink:0;width:auto;margin-top:0;}
+  .print-topbar-inner .hint{margin:0;flex:1;min-width:200px;}
+
+  /* ---- Modal pratinjau cetak ---- */
+  .preview-overlay{
+    display:none;position:fixed;inset:0;background:rgba(33,30,27,.72);
+    z-index:1000;flex-direction:column;
+  }
+  .preview-overlay.active{display:flex;}
+  .preview-toolbar{
+    background:var(--paper-2);border-bottom:1px solid var(--line);
+    padding:12px 20px;display:flex;align-items:center;justify-content:space-between;
+    gap:12px;flex-wrap:wrap;
+  }
+  .preview-title{font-size:14px;font-weight:700;color:var(--ink);}
+  .preview-title span{font-weight:400;color:var(--ink-soft);font-size:12px;margin-left:8px;}
+  .preview-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .preview-toolbar-actions .btn{padding:8px 14px;font-size:12px;}
+  .preview-zoom-label{font-size:12px;color:var(--ink-soft);min-width:42px;text-align:center;display:inline-block;}
+  .preview-pages{
+    flex:1;overflow:auto;padding:28px;display:flex;flex-direction:column;
+    align-items:center;gap:22px;
+  }
+  .preview-page-wrap{
+    background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.35);overflow:hidden;
+    flex-shrink:0;position:relative;
+  }
+  .preview-page-label{
+    color:#fff;font-size:12px;text-align:center;margin-top:-12px;letter-spacing:.04em;
+    opacity:.85;
+  }
 </style>
 </head>
 <body>
+<div class="print-topbar">
+  <div class="print-topbar-inner">
+    <button class="btn btn-add btn-stamp" id="print-btn">
+      Pratinjau &amp; cetak flashcard
+    </button>
+    <p class="hint">
+      Pratinjau akan terbuka dulu sebelum dialog cetak muncul. Pastikan cetak
+      <strong>dua sisi (duplex), balik di tepi panjang</strong> —
+      sisi belakang sudah disusun terbalik supaya pas dengan sisi depan.
+    </p>
+  </div>
+</div>
 <div class="wrap">
 
   <header>
@@ -171,202 +247,224 @@
   <div class="layout">
 
     <div class="panel">
-      <h2>Tambah kartu</h2>
 
-      <label for="f-kanji">Kanji (depan)</label>
-      <input type="text" id="f-kanji" placeholder="学">
+      <details class="ctrl-group" open>
+        <summary>Tambah kartu</summary>
+        <div class="ctrl-body">
+          <label for="f-kanji">Kanji (depan)</label>
+          <input type="text" id="f-kanji" placeholder="学">
 
-      <label for="f-reading">Cara baca (opsional)</label>
-      <input type="text" id="f-reading" placeholder="がく / gaku">
+          <label for="f-reading">Cara baca (opsional)</label>
+          <input type="text" id="f-reading" placeholder="がく / gaku">
 
-      <label for="f-meaning">Arti (belakang)</label>
-      <input type="text" id="f-meaning" placeholder="belajar, ilmu">
+          <label for="f-meaning">Arti (belakang)</label>
+          <input type="text" id="f-meaning" placeholder="belajar, ilmu">
 
-      <button class="btn btn-add" id="add-btn">Tambahkan kartu</button>
+          <button class="btn btn-add" id="add-btn">Tambahkan kartu</button>
 
-      <div class="form-edit-note" id="edit-note">
-        <span>Sedang mengedit kartu #<span id="edit-index-label"></span></span>
-        <button type="button" id="cancel-edit-btn">Batal</button>
-      </div>
-
-      <label for="font-kanji-select" style="margin-top:20px;">Font kanji (depan)</label>
-      <select id="font-kanji-select" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
-        <optgroup label="Direkomendasikan — gothic, stroke rata, mudah dibaca">
-          <option value="'Noto Sans JP', sans-serif" selected>Noto Sans JP (Regular)</option>
-          <option value="300 'Noto Sans JP', sans-serif">Noto Sans JP (Light, lebih tipis)</option>
-          <option value="'BIZ UDPGothic', sans-serif">BIZ UDPGothic (desain universal, dipakai di buku pelajaran)</option>
-          <option value="'Kosugi', sans-serif">Kosugi (ringan, lega)</option>
-          <option value="'M PLUS 1', sans-serif">M PLUS 1 (modern)</option>
-        </optgroup>
-        <optgroup label="Font Google lain (serif, stroke tebal-tipis)">
-          <option value="'Noto Serif JP', serif">Noto Serif JP (serif Jepang)</option>
-          <option value="'Zen Kaku Gothic New', sans-serif">Zen Kaku Gothic New (sans Jepang)</option>
-        </optgroup>
-        <optgroup label="Font umum Windows (ikut PC kamu)">
-          <option value="'Yu Mincho', 'MS Mincho', serif">Yu Mincho</option>
-          <option value="'Yu Gothic', 'Meiryo', sans-serif">Yu Gothic</option>
-          <option value="'Meiryo', sans-serif">Meiryo</option>
-          <option value="'MS Gothic', monospace">MS Gothic</option>
-          <option value="'MS Mincho', serif">MS Mincho</option>
-        </optgroup>
-      </select>
-
-      <label for="font-kanji-weight-select">Ketebalan font kanji</label>
-      <select id="font-kanji-weight-select" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
-        <option value="300">Light (tipis)</option>
-        <option value="400" selected>Regular (normal)</option>
-        <option value="500">Medium</option>
-        <option value="700">Bold (tebal)</option>
-      </select>
-
-      <label for="font-reading-select">Font cara baca (belakang)</label>
-      <select id="font-reading-select" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
-        <optgroup label="Direkomendasikan — gothic, stroke rata, mudah dibaca">
-          <option value="'Noto Sans JP', sans-serif" selected>Noto Sans JP (Regular)</option>
-          <option value="300 'Noto Sans JP', sans-serif">Noto Sans JP (Light, lebih tipis)</option>
-          <option value="'BIZ UDPGothic', sans-serif">BIZ UDPGothic (desain universal)</option>
-          <option value="'Kosugi', sans-serif">Kosugi (ringan, lega)</option>
-          <option value="'M PLUS 1', sans-serif">M PLUS 1 (modern)</option>
-        </optgroup>
-        <optgroup label="Font Google lain">
-          <option value="'Noto Serif JP', serif">Noto Serif JP (serif Jepang)</option>
-          <option value="'Zen Kaku Gothic New', sans-serif">Zen Kaku Gothic New (sans Jepang)</option>
-        </optgroup>
-        <optgroup label="Font umum Windows (ikut PC kamu)">
-          <option value="'Yu Gothic', 'Meiryo', sans-serif">Yu Gothic</option>
-          <option value="'Meiryo', sans-serif">Meiryo</option>
-          <option value="'MS Gothic', monospace">MS Gothic</option>
-          <option value="'Segoe UI', Arial, sans-serif">Segoe UI</option>
-        </optgroup>
-      </select>
-
-      <label for="font-meaning-select">Font arti (belakang)</label>
-      <select id="font-meaning-select" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
-        <optgroup label="Font Google (selalu tampil sama)">
-          <option value="'Zen Kaku Gothic New', sans-serif" selected>Zen Kaku Gothic New (sans)</option>
-          <option value="'Noto Serif JP', serif">Noto Serif JP (serif)</option>
-        </optgroup>
-        <optgroup label="Font umum Windows (ikut PC kamu)">
-          <option value="'Segoe UI', Arial, sans-serif">Segoe UI</option>
-          <option value="Calibri, Arial, sans-serif">Calibri</option>
-          <option value="Arial, sans-serif">Arial</option>
-          <option value="'Times New Roman', serif">Times New Roman</option>
-          <option value="'Century Gothic', sans-serif">Century Gothic</option>
-          <option value="'Comic Sans MS', sans-serif">Comic Sans MS</option>
-        </optgroup>
-      </select>
-
-      <div class="row-btns">
-        <button class="btn" id="export-btn">Ekspor JSON</button>
-        <button class="btn" id="import-btn">Impor JSON</button>
-      </div>
-      <input type="file" id="import-file" accept="application/json" style="display:none;">
-      <label for="f-density">Kartu per halaman</label>
-      <select id="f-density" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
-        <option value="4">4 kartu (besar)</option>
-        <option value="6">6 kartu</option>
-        <option value="8">8 kartu (standar)</option>
-        <option value="12">12 kartu (hemat kertas)</option>
-        <option value="16">16 kartu</option>
-        <option value="20" selected>20 kartu (hemat kertas)</option>
-        <option value="24">24 kartu</option>
-        <option value="30">30 kartu (sangat hemat kertas)</option>
-        <option value="40">40 kartu (paling hemat kertas, kartu kecil)</option>
-      </select>
-
-      <label for="f-cols">Bentuk kartu (jumlah kolom)</label>
-      <select id="f-cols" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
-        <option value="auto">Otomatis (seimbang)</option>
-        <option value="1">1 kolom — paling memanjang, lebar penuh</option>
-        <option value="2">2 kolom — memanjang</option>
-        <option value="3">3 kolom</option>
-        <option value="4">4 kolom — cenderung kotak/tinggi</option>
-      </select>
-      <p class="hint">
-        Makin sedikit kolom, kartu makin memanjang ke samping — cocok untuk kanji
-        majemuk (2–4 karakter). Ukuran huruf kanji juga otomatis mengecil sendiri
-        kalau kanjinya panjang, supaya tetap muat.
-      </p>
-
-      <label for="f-papersize">Ukuran kertas</label>
-      <select id="f-papersize" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
-        <option value="A4" selected>A4 (210 × 297 mm)</option>
-        <option value="A5">A5 (148 × 210 mm)</option>
-        <option value="A6">A6 (105 × 148 mm)</option>
-        <option value="Letter">Letter / US (215.9 × 279.4 mm)</option>
-        <option value="F4">F4 / Folio (215 × 330 mm)</option>
-      </select>
-      <p class="hint">Kalau printer cuma bisa A4, biarkan di A4 saja — kartunya tetap bisa dipotong kecil setelah dicetak.</p>
-
-      <label for="f-margin">Margin kertas: <span id="margin-val">10</span> mm</label>
-      <input type="range" id="f-margin" min="3" max="30" step="1" value="10" style="width:100%;">
-      <p class="hint">Jarak kosong dari tepi kertas ke kartu terluar. Kalau lubang plong aktif, margin di sisi lubang otomatis nambah kalau nilai ini kurang.</p>
-
-      <label for="f-gap">Jarak antar kartu: <span id="gap-val">1</span> mm</label>
-      <input type="range" id="f-gap" min="0" max="8" step="0.5" value="1" style="width:100%;">
-      <p class="hint">Makin besar jaraknya, makin gampang motongnya, tapi kartu jadi sedikit lebih kecil per halaman.</p>
-
-      <label style="display:flex;align-items:center;gap:8px;margin-top:16px;cursor:pointer;">
-        <input type="checkbox" id="f-manual-size" style="width:auto;">
-        <span style="font-size:13px;color:var(--ink);">Atur ukuran font cara baca &amp; arti secara manual</span>
-      </label>
-
-      <div id="manual-size-controls" style="display:none;margin-top:10px;">
-        <label for="f-size-reading">Ukuran font cara baca: <span id="size-reading-val">4</span> mm</label>
-        <input type="range" id="f-size-reading" min="2" max="8" step="0.5" value="4" style="width:100%;">
-
-        <label for="f-size-meaning">Ukuran font arti: <span id="size-meaning-val">6</span> mm</label>
-        <input type="range" id="f-size-meaning" min="3" max="12" step="0.5" value="6" style="width:100%;">
-
-        <p class="hint">Ukuran di atas adalah batas maksimum. Kalau ada kartu yang artinya kepanjangan untuk ukuran itu, kartu tersebut otomatis mengecil sedikit sendiri supaya tetap terbaca penuh — kartu lain yang teksnya pendek tetap pakai ukuran maksimum.</p>
-      </div>
-
-      <label style="display:flex;align-items:center;gap:8px;margin-top:20px;cursor:pointer;">
-        <input type="checkbox" id="f-show-holes" style="width:auto;">
-        <span style="font-size:13px;color:var(--ink);">Tampilkan panduan lubang plong di tiap kartu</span>
-      </label>
-
-      <div id="holes-controls" style="display:none;margin-top:10px;">
-        <label for="f-hole-count">Jumlah lubang per kartu: <span id="hole-count-val">1</span></label>
-        <input type="range" id="f-hole-count" min="1" max="6" step="1" value="1" style="width:100%;">
-
-        <label for="f-hole-side">Posisi pada kartu (dekat sisi mana)</label>
-        <select id="f-hole-side" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
-          <option value="top" selected>Atas</option>
-          <option value="left">Kiri</option>
-          <option value="right">Kanan</option>
-          <option value="bottom">Bawah</option>
-        </select>
-
-        <label for="f-hole-offset">Jarak titik tengah lubang dari tepi kartu: <span id="hole-offset-val">3</span> mm</label>
-        <input type="range" id="f-hole-offset" min="1" max="10" step="0.5" value="3" style="width:100%;">
-
-        <label for="f-hole-diameter">Diameter lubang: <span id="hole-diameter-val">3</span> mm</label>
-        <input type="range" id="f-hole-diameter" min="1.5" max="8" step="0.5" value="3" style="width:100%;">
-
-        <label for="f-hole-inset">Jarak antar lubang dari ujung sisi (kalau lebih dari 1): <span id="hole-inset-val">3</span> mm</label>
-        <input type="range" id="f-hole-inset" min="1" max="20" step="0.5" value="3" style="width:100%;">
-
-        <div class="hole-preview-box">
-          <svg id="hole-preview-svg" width="100" height="100"></svg>
+          <div class="form-edit-note" id="edit-note">
+            <span>Sedang mengedit kartu #<span id="edit-index-label"></span></span>
+            <button type="button" id="cancel-edit-btn">Batal</button>
+          </div>
         </div>
+      </details>
 
-        <p class="hint">
-          Lubang di sini ada <strong>di dalam tiap kartu</strong> (bukan di lembar kertasnya) —
-          jadi tetap kelihatan setelah kartu dipotong satu-satu, cocok kalau mau
-          disatukan pakai ring binder. Ukuran &amp; jaraknya otomatis mengecil sendiri
-          kalau kartunya kekecilan (misal pas pilih kepadatan 40 kartu/halaman),
-          supaya lubangnya tetap muat di dalam kartu.
-        </p>
-      </div>
+      <details class="ctrl-group">
+        <summary>Font &amp; gaya tulisan</summary>
+        <div class="ctrl-body">
+          <label for="font-kanji-select">Font kanji (depan)</label>
+          <select id="font-kanji-select" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+            <optgroup label="Direkomendasikan — gothic, stroke rata, mudah dibaca">
+              <option value="'Noto Sans JP', sans-serif" selected>Noto Sans JP (Regular)</option>
+              <option value="300 'Noto Sans JP', sans-serif">Noto Sans JP (Light, lebih tipis)</option>
+              <option value="'BIZ UDPGothic', sans-serif">BIZ UDPGothic (desain universal, dipakai di buku pelajaran)</option>
+              <option value="'Kosugi', sans-serif">Kosugi (ringan, lega)</option>
+              <option value="'M PLUS 1', sans-serif">M PLUS 1 (modern)</option>
+            </optgroup>
+            <optgroup label="Font Google lain (serif, stroke tebal-tipis)">
+              <option value="'Noto Serif JP', serif">Noto Serif JP (serif Jepang)</option>
+              <option value="'Zen Kaku Gothic New', sans-serif">Zen Kaku Gothic New (sans Jepang)</option>
+            </optgroup>
+            <optgroup label="Font umum Windows (ikut PC kamu)">
+              <option value="'Yu Mincho', 'MS Mincho', serif">Yu Mincho</option>
+              <option value="'Yu Gothic', 'Meiryo', sans-serif">Yu Gothic</option>
+              <option value="'Meiryo', sans-serif">Meiryo</option>
+              <option value="'MS Gothic', monospace">MS Gothic</option>
+              <option value="'MS Mincho', serif">MS Mincho</option>
+            </optgroup>
+          </select>
 
-      <button class="btn btn-add btn-stamp" id="print-btn" style="margin-top:20px;">
-        Cetak flashcard
-      </button>
-      <p class="hint">
-        Pastikan cetak <strong>dua sisi (duplex), balik di tepi panjang</strong> —
-        sisi belakang sudah disusun terbalik supaya pas dengan sisi depan.
-      </p>
+          <label for="font-kanji-weight-select">Ketebalan font kanji</label>
+          <select id="font-kanji-weight-select" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+            <option value="300">Light (tipis)</option>
+            <option value="400" selected>Regular (normal)</option>
+            <option value="500">Medium</option>
+            <option value="700">Bold (tebal)</option>
+          </select>
+
+          <label for="font-reading-select">Font cara baca (belakang)</label>
+          <select id="font-reading-select" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+            <optgroup label="Direkomendasikan — gothic, stroke rata, mudah dibaca">
+              <option value="'Noto Sans JP', sans-serif" selected>Noto Sans JP (Regular)</option>
+              <option value="300 'Noto Sans JP', sans-serif">Noto Sans JP (Light, lebih tipis)</option>
+              <option value="'BIZ UDPGothic', sans-serif">BIZ UDPGothic (desain universal)</option>
+              <option value="'Kosugi', sans-serif">Kosugi (ringan, lega)</option>
+              <option value="'M PLUS 1', sans-serif">M PLUS 1 (modern)</option>
+            </optgroup>
+            <optgroup label="Font Google lain">
+              <option value="'Noto Serif JP', serif">Noto Serif JP (serif Jepang)</option>
+              <option value="'Zen Kaku Gothic New', sans-serif">Zen Kaku Gothic New (sans Jepang)</option>
+            </optgroup>
+            <optgroup label="Font umum Windows (ikut PC kamu)">
+              <option value="'Yu Gothic', 'Meiryo', sans-serif">Yu Gothic</option>
+              <option value="'Meiryo', sans-serif">Meiryo</option>
+              <option value="'MS Gothic', monospace">MS Gothic</option>
+              <option value="'Segoe UI', Arial, sans-serif">Segoe UI</option>
+            </optgroup>
+          </select>
+
+          <label for="font-meaning-select">Font arti (belakang)</label>
+          <select id="font-meaning-select" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+            <optgroup label="Font Google (selalu tampil sama)">
+              <option value="'Zen Kaku Gothic New', sans-serif" selected>Zen Kaku Gothic New (sans)</option>
+              <option value="'Noto Serif JP', serif">Noto Serif JP (serif)</option>
+            </optgroup>
+            <optgroup label="Font umum Windows (ikut PC kamu)">
+              <option value="'Segoe UI', Arial, sans-serif">Segoe UI</option>
+              <option value="Calibri, Arial, sans-serif">Calibri</option>
+              <option value="Arial, sans-serif">Arial</option>
+              <option value="'Times New Roman', serif">Times New Roman</option>
+              <option value="'Century Gothic', sans-serif">Century Gothic</option>
+              <option value="'Comic Sans MS', sans-serif">Comic Sans MS</option>
+            </optgroup>
+          </select>
+        </div>
+      </details>
+
+      <details class="ctrl-group">
+        <summary>Ekspor / impor</summary>
+        <div class="ctrl-body">
+          <div class="row-btns" style="margin-top:0;">
+            <button class="btn" id="export-btn">Ekspor JSON</button>
+            <button class="btn" id="import-btn">Impor JSON</button>
+          </div>
+          <input type="file" id="import-file" accept="application/json" style="display:none;">
+        </div>
+      </details>
+
+      <details class="ctrl-group">
+        <summary>Tata letak &amp; ukuran kertas</summary>
+        <div class="ctrl-body">
+          <label for="f-density">Kartu per halaman</label>
+          <select id="f-density" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+            <option value="4">4 kartu (besar)</option>
+            <option value="6">6 kartu</option>
+            <option value="8">8 kartu (standar)</option>
+            <option value="12">12 kartu (hemat kertas)</option>
+            <option value="16">16 kartu</option>
+            <option value="20" selected>20 kartu (hemat kertas)</option>
+            <option value="24">24 kartu</option>
+            <option value="30">30 kartu (sangat hemat kertas)</option>
+            <option value="40">40 kartu (paling hemat kertas, kartu kecil)</option>
+          </select>
+
+          <label for="f-cols">Bentuk kartu (jumlah kolom)</label>
+          <select id="f-cols" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+            <option value="auto">Otomatis (seimbang)</option>
+            <option value="1">1 kolom — paling memanjang, lebar penuh</option>
+            <option value="2">2 kolom — memanjang</option>
+            <option value="3">3 kolom</option>
+            <option value="4">4 kolom — cenderung kotak/tinggi</option>
+          </select>
+          <p class="hint">
+            Makin sedikit kolom, kartu makin memanjang ke samping — cocok untuk kanji
+            majemuk (2–4 karakter). Ukuran huruf kanji juga otomatis mengecil sendiri
+            kalau kanjinya panjang, supaya tetap muat.
+          </p>
+
+          <label for="f-papersize">Ukuran kertas</label>
+          <select id="f-papersize" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+            <option value="A4" selected>A4 (210 × 297 mm)</option>
+            <option value="A5">A5 (148 × 210 mm)</option>
+            <option value="A6">A6 (105 × 148 mm)</option>
+            <option value="Letter">Letter / US (215.9 × 279.4 mm)</option>
+            <option value="F4">F4 / Folio (215 × 330 mm)</option>
+          </select>
+          <p class="hint">Kalau printer cuma bisa A4, biarkan di A4 saja — kartunya tetap bisa dipotong kecil setelah dicetak.</p>
+
+          <label for="f-margin">Margin kertas: <span id="margin-val">10</span> mm</label>
+          <input type="range" id="f-margin" min="3" max="30" step="1" value="10" style="width:100%;">
+          <p class="hint">Jarak kosong dari tepi kertas ke kartu terluar. Kalau lubang plong aktif, margin di sisi lubang otomatis nambah kalau nilai ini kurang.</p>
+
+          <label for="f-gap">Jarak antar kartu: <span id="gap-val">1</span> mm</label>
+          <input type="range" id="f-gap" min="0" max="8" step="0.5" value="1" style="width:100%;">
+          <p class="hint">Makin besar jaraknya, makin gampang motongnya, tapi kartu jadi sedikit lebih kecil per halaman.</p>
+        </div>
+      </details>
+
+      <details class="ctrl-group">
+        <summary>Ukuran font manual</summary>
+        <div class="ctrl-body">
+          <label style="display:flex;align-items:center;gap:8px;margin-top:0;cursor:pointer;">
+            <input type="checkbox" id="f-manual-size" style="width:auto;">
+            <span style="font-size:13px;color:var(--ink);">Atur ukuran font cara baca &amp; arti secara manual</span>
+          </label>
+
+          <div id="manual-size-controls" style="display:none;margin-top:10px;">
+            <label for="f-size-reading">Ukuran font cara baca: <span id="size-reading-val">4</span> mm</label>
+            <input type="range" id="f-size-reading" min="2" max="8" step="0.5" value="4" style="width:100%;">
+
+            <label for="f-size-meaning">Ukuran font arti: <span id="size-meaning-val">6</span> mm</label>
+            <input type="range" id="f-size-meaning" min="3" max="12" step="0.5" value="6" style="width:100%;">
+
+            <p class="hint">Ukuran di atas adalah batas maksimum. Kalau ada kartu yang artinya kepanjangan untuk ukuran itu, kartu tersebut otomatis mengecil sedikit sendiri supaya tetap terbaca penuh — kartu lain yang teksnya pendek tetap pakai ukuran maksimum.</p>
+          </div>
+        </div>
+      </details>
+
+      <details class="ctrl-group">
+        <summary>Lubang plong (hole punch)</summary>
+        <div class="ctrl-body">
+          <label style="display:flex;align-items:center;gap:8px;margin-top:0;cursor:pointer;">
+            <input type="checkbox" id="f-show-holes" style="width:auto;">
+            <span style="font-size:13px;color:var(--ink);">Tampilkan panduan lubang plong di tiap kartu</span>
+          </label>
+
+          <div id="holes-controls" style="display:none;margin-top:10px;">
+            <label for="f-hole-count">Jumlah lubang per kartu: <span id="hole-count-val">1</span></label>
+            <input type="range" id="f-hole-count" min="1" max="6" step="1" value="1" style="width:100%;">
+
+            <label for="f-hole-side">Posisi pada kartu (dekat sisi mana)</label>
+            <select id="f-hole-side" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+              <option value="top" selected>Atas</option>
+              <option value="left">Kiri</option>
+              <option value="right">Kanan</option>
+              <option value="bottom">Bawah</option>
+            </select>
+
+            <label for="f-hole-offset">Jarak titik tengah lubang dari tepi kartu: <span id="hole-offset-val">3</span> mm</label>
+            <input type="range" id="f-hole-offset" min="1" max="10" step="0.5" value="3" style="width:100%;">
+
+            <label for="f-hole-diameter">Diameter lubang: <span id="hole-diameter-val">3</span> mm</label>
+            <input type="range" id="f-hole-diameter" min="1.5" max="8" step="0.5" value="3" style="width:100%;">
+
+            <label for="f-hole-inset">Jarak antar lubang dari ujung sisi (kalau lebih dari 1): <span id="hole-inset-val">3</span> mm</label>
+            <input type="range" id="f-hole-inset" min="1" max="20" step="0.5" value="3" style="width:100%;">
+
+            <div class="hole-preview-box">
+              <svg id="hole-preview-svg" width="100" height="100"></svg>
+            </div>
+
+            <p class="hint">
+              Lubang di sini ada <strong>di dalam tiap kartu</strong> (bukan di lembar kertasnya) —
+              jadi tetap kelihatan setelah kartu dipotong satu-satu, cocok kalau mau
+              disatukan pakai ring binder. Ukuran &amp; jaraknya otomatis mengecil sendiri
+              kalau kartunya kekecilan (misal pas pilih kepadatan 40 kartu/halaman),
+              supaya lubangnya tetap muat di dalam kartu.
+            </p>
+          </div>
+        </div>
+      </details>
     </div>
 
     <div class="panel">
@@ -383,6 +481,20 @@
 </div>
 
 <div id="print-area"></div>
+
+<div class="preview-overlay" id="preview-overlay">
+  <div class="preview-toolbar">
+    <div class="preview-title">Pratinjau cetak <span id="preview-page-count"></span></div>
+    <div class="preview-toolbar-actions">
+      <button class="btn" id="preview-zoom-out" title="Perkecil">−</button>
+      <span class="preview-zoom-label" id="preview-zoom-label">100%</span>
+      <button class="btn" id="preview-zoom-in" title="Perbesar">+</button>
+      <button class="btn" id="preview-close-btn">Tutup</button>
+      <button class="btn btn-add btn-stamp" id="preview-print-btn">Cetak sekarang</button>
+    </div>
+  </div>
+  <div class="preview-pages" id="preview-pages"></div>
+</div>
 
 <script>
 let cards = [];
@@ -704,13 +816,113 @@ document.getElementById('import-file').addEventListener('change', e => {
   e.target.value = '';
 });
 
-document.getElementById('print-btn').addEventListener('click', () => {
+const MM_TO_PX = 96 / 25.4; // 1in = 25.4mm = 96px (satuan CSS absolut, tidak tergantung DPI layar)
+const previewOverlay = document.getElementById('preview-overlay');
+const previewPagesEl = document.getElementById('preview-pages');
+const previewPageCount = document.getElementById('preview-page-count');
+const previewZoomLabel = document.getElementById('preview-zoom-label');
+let previewZoom = 1; // pengali di atas skala dasar (fit-to-width)
+let previewBaseScale = 1;
+
+function openPrintPreview(){
   if(cards.length === 0){
     alert('Tambahkan minimal satu kartu dulu.');
     return;
   }
   buildPrintArea();
+  renderPreviewPages();
+  previewOverlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePrintPreview(){
+  previewOverlay.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function renderPreviewPages(){
+  const paper = PAPER_SIZES[paperSizeSelect.value];
+  const printArea = document.getElementById('print-area');
+  const pageNodes = Array.from(printArea.querySelectorAll('.print-page'));
+
+  previewPagesEl.innerHTML = '';
+  previewPageCount.textContent = pageNodes.length ? `(${pageNodes.length} halaman)` : '';
+
+  // Skala dasar: pas dengan lebar area pratinjau (dikurangi padding)
+  const availableWidth = Math.max(previewPagesEl.clientWidth - 56, 200);
+  const paperWidthPx = paper.w * MM_TO_PX;
+  previewBaseScale = Math.min(1, availableWidth / paperWidthPx);
+  previewZoom = 1;
+  previewZoomLabel.textContent = '100%';
+
+  pageNodes.forEach((page, i) => {
+    const clone = page.cloneNode(true);
+    const wrap = document.createElement('div');
+    wrap.className = 'preview-page-wrap';
+    wrap.dataset.pageIndex = i;
+    wrap.appendChild(clone);
+
+    const label = document.createElement('div');
+    label.className = 'preview-page-label';
+    const pairIndex = Math.floor(i / 2) + 1;
+    const isFront = i % 2 === 0;
+    label.textContent = `Halaman ${i + 1} — Set kartu ${pairIndex}, sisi ${isFront ? 'depan' : 'belakang'}`;
+
+    previewPagesEl.appendChild(wrap);
+    previewPagesEl.appendChild(label);
+  });
+
+  applyPreviewScale();
+}
+
+function applyPreviewScale(){
+  const paper = PAPER_SIZES[paperSizeSelect.value];
+  const scale = previewBaseScale * previewZoom;
+  const w = paper.w * MM_TO_PX * scale;
+  const h = paper.h * MM_TO_PX * scale;
+
+  previewPagesEl.querySelectorAll('.preview-page-wrap').forEach(wrap => {
+    wrap.style.width = w + 'px';
+    wrap.style.height = h + 'px';
+    const inner = wrap.firstElementChild;
+    inner.style.transform = `scale(${scale})`;
+    inner.style.transformOrigin = 'top left';
+  });
+
+  previewZoomLabel.textContent = Math.round(scale * 100) + '%';
+}
+
+document.getElementById('print-btn').addEventListener('click', openPrintPreview);
+
+document.getElementById('preview-close-btn').addEventListener('click', closePrintPreview);
+
+document.getElementById('preview-print-btn').addEventListener('click', () => {
   window.print();
+});
+
+document.getElementById('preview-zoom-in').addEventListener('click', () => {
+  previewZoom = Math.min(previewZoom * 1.2, 3 / Math.max(previewBaseScale, 0.01));
+  applyPreviewScale();
+});
+
+document.getElementById('preview-zoom-out').addEventListener('click', () => {
+  previewZoom = Math.max(previewZoom / 1.2, 0.2 / Math.max(previewBaseScale, 0.01));
+  applyPreviewScale();
+});
+
+previewOverlay.addEventListener('click', e => {
+  if(e.target === previewOverlay){ closePrintPreview(); }
+});
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && previewOverlay.classList.contains('active')){
+    closePrintPreview();
+  }
+});
+
+window.addEventListener('afterprint', () => {
+  // Biarkan pratinjau tetap terbuka setelah dialog cetak ditutup/dibatalkan,
+  // supaya user bisa cetak ulang atau menyesuaikan lagi tanpa membangun ulang.
 });
 
 function cellSizeMm(cols, rows, pageW, pageH, gap){
