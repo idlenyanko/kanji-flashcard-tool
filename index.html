@@ -179,6 +179,11 @@
   .ctrl-group .ctrl-body{padding:16px 14px;}
   .ctrl-group .ctrl-body label:first-of-type{margin-top:0;}
 
+  .ctrl-plain{
+    border:1px solid var(--line);border-radius:2px;margin-bottom:10px;
+    background:var(--paper-2);padding:16px 14px;
+  }
+
   .print-topbar{
     position:sticky;top:0;z-index:100;
     background:var(--paper);border-bottom:2px solid var(--ink);
@@ -247,6 +252,14 @@
   <div class="layout">
 
     <div class="panel">
+
+      <div class="ctrl-plain">
+        <div class="row-btns" style="margin-top:0;">
+          <button class="btn" id="export-btn">Ekspor JSON</button>
+          <button class="btn" id="import-btn">Impor JSON</button>
+        </div>
+        <input type="file" id="import-file" accept="application/json" style="display:none;">
+      </div>
 
       <details class="ctrl-group" open>
         <summary>Tambah kartu</summary>
@@ -338,17 +351,6 @@
               <option value="'Comic Sans MS', sans-serif">Comic Sans MS</option>
             </optgroup>
           </select>
-        </div>
-      </details>
-
-      <details class="ctrl-group">
-        <summary>Ekspor / impor</summary>
-        <div class="ctrl-body">
-          <div class="row-btns" style="margin-top:0;">
-            <button class="btn" id="export-btn">Ekspor JSON</button>
-            <button class="btn" id="import-btn">Impor JSON</button>
-          </div>
-          <input type="file" id="import-file" accept="application/json" style="display:none;">
         </div>
       </details>
 
