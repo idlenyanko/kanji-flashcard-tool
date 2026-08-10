@@ -610,12 +610,26 @@
             <option value="2">2 kolom — memanjang</option>
             <option value="3">3 kolom</option>
             <option value="4">4 kolom — cenderung kotak/tinggi</option>
+            <option value="5">5 kolom</option>
+            <option value="6">6 kolom — kartu kecil</option>
+            <option value="7">7 kolom</option>
+            <option value="8">8 kolom — kartu paling kecil, lebar penuh</option>
           </select>
           <p class="hint">
-            Makin sedikit kolom, kartu makin memanjang ke samping — cocok untuk kanji
-            majemuk (2–4 karakter). Ukuran huruf kanji juga otomatis mengecil sendiri
-            kalau kanjinya panjang, supaya tetap muat.
+            Makin banyak kolom, kartu jadi makin sempit ke samping tapi makin
+            tinggi ke bawah (bisa jadi potrait) — makin sedikit kolom, kartu makin
+            memanjang ke samping (landscape). Kalau mau bentuknya tetap dijaga
+            landscape/potrait apapun jumlah kolomnya, atur di "Orientasi kartu" di bawah.
+            Ukuran huruf kanji otomatis mengecil sendiri kalau kanjinya panjang, supaya tetap muat.
           </p>
+
+          <label for="f-card-orientation">Orientasi kartu</label>
+          <select id="f-card-orientation" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
+            <option value="auto" selected>Otomatis (ikuti jumlah kolom)</option>
+            <option value="landscape">Selalu landscape (lebar &gt; tinggi)</option>
+            <option value="portrait">Selalu potrait (tinggi &gt; lebar)</option>
+          </select>
+          <p class="hint">Kalau dipilih "Selalu landscape", setiap kartu dipaksa tetap lebih lebar daripada tinggi walaupun jumlah kolomnya banyak (mis. 8) — susunan baris/kolom di halaman otomatis disesuaikan (ditranspose) supaya bentuk kartunya tetap landscape, jumlah kartu per halaman tidak berubah.</p>
 
           <label for="f-papersize">Ukuran kertas</label>
           <select id="f-papersize" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
@@ -642,17 +656,20 @@
         <div class="ctrl-body">
           <label style="display:flex;align-items:center;gap:8px;margin-top:0;cursor:pointer;">
             <input type="checkbox" id="f-manual-size" style="width:auto;">
-            <span style="font-size:13px;color:var(--ink);">Atur ukuran font cara baca &amp; arti secara manual</span>
+            <span style="font-size:13px;color:var(--ink);">Atur ukuran font kanji, cara baca &amp; arti secara manual</span>
           </label>
 
           <div id="manual-size-controls" style="display:none;margin-top:10px;">
+            <label for="f-size-kanji">Ukuran font kanji (halaman depan): <span id="size-kanji-val">20</span> mm</label>
+            <input type="range" id="f-size-kanji" min="3" max="40" step="0.5" value="20" style="width:100%;">
+
             <label for="f-size-reading">Ukuran font cara baca: <span id="size-reading-val">4</span> mm</label>
             <input type="range" id="f-size-reading" min="2" max="8" step="0.5" value="4" style="width:100%;">
 
             <label for="f-size-meaning">Ukuran font arti: <span id="size-meaning-val">6</span> mm</label>
             <input type="range" id="f-size-meaning" min="3" max="12" step="0.5" value="6" style="width:100%;">
 
-            <p class="hint">Ukuran di atas adalah batas maksimum. Kalau ada kartu yang artinya kepanjangan untuk ukuran itu, kartu tersebut otomatis mengecil sedikit sendiri supaya tetap terbaca penuh — kartu lain yang teksnya pendek tetap pakai ukuran maksimum.</p>
+            <p class="hint">Ukuran di atas adalah batas maksimum. Batas ini otomatis dibatasi ulang oleh ruang yang tersedia di dalam margin tiap kartu (tergantung ukuran kartu yang dipilih) — kalau teksnya kepanjangan untuk muat, kartu tersebut mengecil sendiri sedikit supaya tetap terbaca penuh dan tidak melewati tepi kartu. Kartu lain yang teksnya pendek tetap pakai ukuran maksimum.</p>
           </div>
         </div>
       </details>
@@ -1577,13 +1594,18 @@ fontMeaningSelect.addEventListener('change', () => applyFontChoice('--font-meani
 
 const manualSizeCheckbox = document.getElementById('f-manual-size');
 const manualSizeControls = document.getElementById('manual-size-controls');
+const sizeKanjiInput = document.getElementById('f-size-kanji');
 const sizeReadingInput = document.getElementById('f-size-reading');
 const sizeMeaningInput = document.getElementById('f-size-meaning');
+const sizeKanjiVal = document.getElementById('size-kanji-val');
 const sizeReadingVal = document.getElementById('size-reading-val');
 const sizeMeaningVal = document.getElementById('size-meaning-val');
 
 manualSizeCheckbox.addEventListener('change', () => {
   manualSizeControls.style.display = manualSizeCheckbox.checked ? 'block' : 'none';
+});
+sizeKanjiInput.addEventListener('input', () => {
+  sizeKanjiVal.textContent = sizeKanjiInput.value;
 });
 sizeReadingInput.addEventListener('input', () => {
   sizeReadingVal.textContent = sizeReadingInput.value;
@@ -1680,13 +1702,13 @@ function computeCurrentCellSize(){
   const perPage = parseInt(document.getElementById('f-density').value, 10);
   const colsChoice = document.getElementById('f-cols').value;
   const cols = colsChoice === 'auto' ? DENSITY_PRESETS[perPage].defaultCols : parseInt(colsChoice, 10);
-  const rows = Math.ceil(perPage / cols);
   const paper = PAPER_SIZES[paperSizeSelect.value];
   const margins = getPageMargins();
   const gap = parseFloat(gapInput.value);
   const pageW = paper.w - margins.left - margins.right;
   const pageH = paper.h - margins.top - margins.bottom;
-  return cellSizeMm(cols, rows, pageW, pageH, gap);
+  const {cellW, cellH} = resolveGrid(perPage, cols, pageW, pageH, gap);
+  return {w: cellW, h: cellH};
 }
 
 function renderHolePreview(){
@@ -1736,6 +1758,7 @@ marginInput.addEventListener('input', () => { marginVal.textContent = marginInpu
 gapInput.addEventListener('input', () => { gapVal.textContent = gapInput.value; renderHolePreview(); });
 densitySelect.addEventListener('change', renderHolePreview);
 colsSelect.addEventListener('change', renderHolePreview);
+document.getElementById('f-card-orientation').addEventListener('change', renderHolePreview);
 
 renderHolePreview();
 
@@ -2111,14 +2134,39 @@ function cellSizeMm(cols, rows, pageW, pageH, gap){
   return {w, h};
 }
 
-function autoKanjiSizeMm(text, cellW, cellH){
+// Tentukan susunan kolom/baris final berdasarkan jumlah kolom yang dipilih user,
+// lalu paksa bentuk tiap kartu tetap landscape/potrait sesuai "Orientasi kartu"
+// (kalau bukan "auto") dengan cara menukar (transpose) kolom<->baris — jumlah
+// kartu per halaman (cols*rows) tidak berubah, cuma susunannya yang dibalik.
+function resolveGrid(perPage, cols, pageW, pageH, gap){
+  let rows = Math.ceil(perPage / cols);
+  let {w: cellW, h: cellH} = cellSizeMm(cols, rows, pageW, pageH, gap);
+
+  const orientation = document.getElementById('f-card-orientation').value;
+  if(orientation !== 'auto'){
+    const wantLandscape = orientation === 'landscape';
+    const isLandscape = cellW >= cellH;
+    if(isLandscape !== wantLandscape){
+      [cols, rows] = [rows, cols];
+      ({w: cellW, h: cellH} = cellSizeMm(cols, rows, pageW, pageH, gap));
+    }
+  }
+  return {cols, rows, cellW, cellH};
+}
+
+// Padding internal tiap kartu (.pc{padding:1.5mm}) — dipakai supaya batas ukuran
+// font betul-betul menghitung ruang yang tersisa di dalam margin kartu, bukan cuma tebakan.
+const CARD_PADDING_MM = 1.5;
+
+function fitKanjiSizeMm(text, maxSize, cellW, cellH){
   const hasFuri = /\[[^\[\]]+\]/.test(text || '');
   const len = Math.max(furiganaVisualLength(text), 1);
-  const effCellH = hasFuri ? cellH * 0.78 : cellH; // sisakan ruang untuk furigana di atas
-  let size = (cellW * 0.85) / len;   // asumsi tiap karakter kira-kira selebar 1 em
-  size = Math.min(size, effCellH * 0.6);
-  size = Math.max(size, 3);
-  size = Math.min(size, 30);
+  const usableW = Math.max(cellW - CARD_PADDING_MM * 2, 2);
+  const usableH = Math.max(cellH - CARD_PADDING_MM * 2, 2);
+  const effH = hasFuri ? usableH * 0.78 : usableH; // sisakan ruang untuk furigana di atas
+  let size = usableW / len;   // asumsi tiap karakter kira-kira selebar 1 em
+  size = Math.min(size, effH * 0.6, maxSize);
+  size = Math.max(size, 2);
   return size;
 }
 
@@ -2159,8 +2207,7 @@ function fitLatinSizeMm(text, maxSize, cellW, cellH){
 function buildPrintArea(){
   const perPage = parseInt(document.getElementById('f-density').value, 10);
   const colsChoice = document.getElementById('f-cols').value;
-  const cols = colsChoice === 'auto' ? DENSITY_PRESETS[perPage].defaultCols : parseInt(colsChoice, 10);
-  const rows = Math.ceil(perPage / cols);
+  const colsPref = colsChoice === 'auto' ? DENSITY_PRESETS[perPage].defaultCols : parseInt(colsChoice, 10);
 
   const paper = PAPER_SIZES[paperSizeSelect.value];
   const holeOpts = currentHoleOptions();
@@ -2171,7 +2218,7 @@ function buildPrintArea(){
 
   const pageW = paper.w - margins.left - margins.right;
   const pageH = paper.h - margins.top - margins.bottom;
-  const {w: cellW, h: cellH} = cellSizeMm(cols, rows, pageW, pageH, gap);
+  const {cols, rows, cellW, cellH} = resolveGrid(perPage, colsPref, pageW, pageH, gap);
 
   // Ukuran font "contoh kalimat" dihitung SATU KALI untuk seluruh dek (bukan per-kartu),
   // berdasarkan contoh terpanjang — supaya seragam waktu dicetak bolak-balik.
@@ -2241,7 +2288,8 @@ function buildPrintArea(){
       if(c.front.type === 'image'){
         inner = `<img class="pc-img" src="${escapeHtml(c.front.src)}" alt="">`;
       } else {
-        const kjSize = autoKanjiSizeMm(c.front.text, cellW, cellH).toFixed(1);
+        const kjMaxSize = manualSizeCheckbox.checked ? parseFloat(sizeKanjiInput.value) : 30;
+        const kjSize = fitKanjiSizeMm(c.front.text, kjMaxSize, cellW, cellH).toFixed(1);
         inner = `<div class="kj" style="font-size:${kjSize}mm;">${renderFuriganaHtml(c.front.text)}</div>`;
       }
       front.innerHTML += `
