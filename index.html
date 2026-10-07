@@ -185,6 +185,21 @@
   .pc .ex-mn{font-family:var(--font-meaning);color:#777;font-style:italic;line-height:1.15;word-break:break-word;}
   .pc .pc-img{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;}
 
+  /* Garis bantu potong hanya di sisi depan: sisi belakang tetap punya kotak yang sama (supaya ukuran identik) tapi garisnya transparan */
+  .pc.pc-back{border-color:transparent;}
+
+  /* ---- Switch on/off ---- */
+  .switch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 8px;}
+  .switch-row .switch-text{font-size:12px;color:var(--ink-soft);}
+  .switch{position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;margin:0;}
+  .switch input{opacity:0;width:0;height:0;position:absolute;}
+  .switch .slider{position:absolute;inset:0;background:#C9C1AE;border-radius:22px;cursor:pointer;transition:background .15s ease;}
+  .switch .slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .15s ease;box-shadow:0 1px 2px rgba(0,0,0,.3);}
+  .switch input:checked + .slider{background:var(--aizome);}
+  .switch input:checked + .slider::before{transform:translateX(16px);}
+  .switch input:focus-visible + .slider{outline:2px solid var(--aizome-soft);outline-offset:2px;}
+  .example-body.off{opacity:.4;pointer-events:none;}
+
   /* ---- Background kartu (global / per-kartu) ---- */
   .pc-bg{position:absolute;inset:0;pointer-events:none;z-index:-1;background-repeat:repeat;}
 
@@ -444,9 +459,17 @@
               <input type="text" id="f-meaning" placeholder="belajar, ilmu">
 
               <div id="back-example-block" style="display:none;">
-                <label>Contoh kalimat (opsional, bisa lebih dari satu)</label>
-                <div id="example-list"></div>
-                <button type="button" class="btn" id="add-example-btn" style="width:100%;">+ Tambah contoh</button>
+                <div class="switch-row">
+                  <span class="switch-text" style="color:var(--ink);font-weight:500;">Contoh kalimat (opsional, bisa lebih dari satu)</span>
+                  <label class="switch" title="Tampilkan / sembunyikan contoh di kartu ini">
+                    <input type="checkbox" id="f-example-on" checked>
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div class="example-body" id="example-body">
+                  <div id="example-list"></div>
+                  <button type="button" class="btn" id="add-example-btn" style="width:100%;">+ Tambah contoh</button>
+                </div>
               </div>
             </div>
 
@@ -604,6 +627,15 @@
       <details class="ctrl-group">
         <summary>Tata letak &amp; ukuran kertas</summary>
         <div class="ctrl-body">
+          <div class="switch-row" style="margin-top:0;">
+            <span class="switch-text" style="color:var(--ink);font-weight:500;">Cetak contoh kalimat (semua kartu)</span>
+            <label class="switch" title="Matikan untuk mencetak semua kartu tanpa contoh">
+              <input type="checkbox" id="f-examples-global" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <p class="hint" style="margin-top:0;margin-bottom:14px;">Kalau dimatikan, contoh kalimat tidak dicetak di kartu mana pun (datanya tetap tersimpan). Switch di tiap kartu hanya berlaku kalau yang ini menyala.</p>
+
           <label for="f-density">Kartu per halaman</label>
           <select id="f-density" style="width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:2px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);">
             <option value="4">4 kartu (besar)</option>
@@ -874,6 +906,17 @@ const readingInput = document.getElementById('f-reading');
 const meaningInput = document.getElementById('f-meaning');
 const exampleListEl = document.getElementById('example-list');
 const addExampleBtn = document.getElementById('add-example-btn');
+const exampleOnInput = document.getElementById('f-example-on');
+const exampleBodyEl = document.getElementById('example-body');
+const examplesGlobalInput = document.getElementById('f-examples-global');
+function syncExampleSwitch(){ exampleBodyEl.classList.toggle('off', !exampleOnInput.checked); }
+exampleOnInput.addEventListener('change', syncExampleSwitch);
+// Contoh efektif untuk satu kartu: harus lolos switch global DAN switch kartu
+function cardExamples(c){
+  if(!examplesGlobalInput.checked) return [];
+  if(!c.back || c.back.type !== 'text' || c.back.showExamples === false) return [];
+  return c.back.examples || [];
+}
 let currentExamples = []; // [{jp, meaning}] — daftar contoh untuk kartu yang lagi diisi/diedit
 const frontImageFileInput = document.getElementById('f-front-image-file');
 const frontImageUrlInput = document.getElementById('f-front-image-url');
@@ -1418,6 +1461,8 @@ function enterEditMode(i){
     meaningInput.value = c.back.text || '';
     currentExamples = (c.back.examples || []).map(ex => ({jp: ex.jp || '', meaning: ex.meaning || ''}));
     renderExampleRows();
+    exampleOnInput.checked = c.back.showExamples !== false;
+    syncExampleSwitch();
   } else {
     backImageData = c.back.src && c.back.src.startsWith('data:') ? c.back.src : null;
     backImageUrlInput.value = backImageData ? '' : (c.back.src || '');
@@ -1436,6 +1481,8 @@ function resetForm(){
   meaningInput.value = '';
   currentExamples = [];
   renderExampleRows();
+  exampleOnInput.checked = true;
+  syncExampleSwitch();
   resetBgOverrideForm();
   frontImageData = null;
   backImageData = null;
@@ -1478,7 +1525,7 @@ function render(){
       : `<div class="meta">
           <p class="reading">${escapeHtml(c.back.reading || '')}</p>
           <p class="meaning">${escapeHtml(c.back.text)}</p>
-          ${(c.back.examples || []).map(ex => `
+          ${(c.back.showExamples === false ? [] : (c.back.examples || [])).map(ex => `
             <p class="example">${renderFuriganaHtml(ex.jp)}${ex.meaning ? ` <span class="ex-mn-inline">— ${escapeHtml(ex.meaning)}</span>` : ''}</p>
           `).join('')}
         </div>`;
@@ -1551,6 +1598,7 @@ function normalizeCard(c){
       ? [{jp: c.back.example, meaning: ''}]
       : [];
   }
+  if(c.back && c.back.type === 'text' && typeof c.back.showExamples !== 'boolean') c.back.showExamples = true;
   if(typeof c.group !== 'string') c.group = '';
   if(!c.background) c.background = null;
   return c;
@@ -1889,7 +1937,7 @@ addBtn.addEventListener('click', () => {
       .map(ex => ({jp: ex.jp.trim(), meaning: ex.meaning.trim()}))
       .filter(ex => ex.jp);
     if(!meaning){ alert('Isi arti (belakang) dulu ya.'); return; }
-    back = {type:'text', reading, text: meaning, examples};
+    back = {type:'text', reading, text: meaning, examples, showExamples: exampleOnInput.checked};
   } else {
     const src = currentBackImageSrc();
     if(!src){ alert('Upload atau isi URL gambar untuk sisi belakang dulu ya.'); return; }
@@ -1937,7 +1985,8 @@ document.getElementById('export-btn').addEventListener('click', () => {
     groups,
     badgePosition,
     badgeShow,
-    watermark
+    watermark,
+    examplesGlobal: examplesGlobalInput.checked
   };
   const blob = new Blob([JSON.stringify(exportData, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -1994,6 +2043,9 @@ document.getElementById('import-file').addEventListener('change', e => {
         if(typeof data.badgePosition === 'string'){
           badgePosition = data.badgePosition;
           badgePositionSelect.value = badgePosition;
+        }
+        if(typeof data.examplesGlobal === 'boolean'){
+          examplesGlobalInput.checked = data.examplesGlobal;
         }
         if(typeof data.badgeShow === 'string'){
           badgeShow = data.badgeShow;
@@ -2241,13 +2293,14 @@ function buildPrintArea(){
   const exampleMaxCap = manualSizeCheckbox.checked
     ? Math.min(parseFloat(sizeMeaningInput.value) * 0.7, 4.5)
     : 4.5;
-  const cardsWithExample = cards.filter(c => c.back.type === 'text' && c.back.examples && c.back.examples.length);
+  const cardsWithExample = cards.filter(c => cardExamples(c).length);
   const deckExampleSize = cardsWithExample.length
     ? Math.min(...cardsWithExample.map(c => {
         // Gabungkan semua kalimat contoh kartu ini jadi satu teks supaya makin
         // banyak contohnya, makin kecil otomatis ukurannya (tetap muat semua).
-        const combined = c.back.examples.map(ex => `${ex.jp} ${ex.meaning}`).join('  ');
-        return fitLatinSizeMm(combined, exampleMaxCap, exampleUsableW, exampleBudgetH * c.back.examples.length);
+        const exs = cardExamples(c);
+        const combined = exs.map(ex => `${ex.jp} ${ex.meaning}`).join('  ');
+        return fitLatinSizeMm(combined, exampleMaxCap, exampleUsableW, exampleBudgetH * exs.length);
       }))
     : exampleMaxCap;
 
@@ -2340,7 +2393,8 @@ function buildPrintArea(){
             inner = `<img class="pc-img" src="${escapeHtml(c.back.src)}" alt="">`;
           } else {
             let mnSize, rdSize, exSize;
-            const hasExample = !!(c.back.examples && c.back.examples.length);
+            const cardEx = cardExamples(c);
+            const hasExample = cardEx.length > 0;
             const readingBudgetH = cellH * (hasExample ? 0.20 : 0.34);
             const meaningBudgetH = cellH * (hasExample ? 0.38 : 0.60);
             const usableW = cellW * 0.9;
@@ -2356,7 +2410,7 @@ function buildPrintArea(){
             }
             exSize = hasExample ? deckExampleSize.toFixed(1) : '0';
             const exampleHtml = hasExample
-              ? `<div class="ex-wrap">${c.back.examples.map(ex => `
+              ? `<div class="ex-wrap">${cardEx.map(ex => `
                   <div class="ex" style="font-size:${exSize}mm;">
                     <div class="ex-jp">${renderFuriganaHtml(ex.jp)}</div>
                     ${ex.meaning ? `<div class="ex-mn">${escapeHtml(ex.meaning)}</div>` : ''}
@@ -2369,7 +2423,7 @@ function buildPrintArea(){
               ${exampleHtml}
             `;
           }
-          back.innerHTML += `<div class="pc">
+          back.innerHTML += `<div class="pc pc-back">
             ${buildBgLayerHtml(c)}
             ${inner}
             ${buildBadgeHtml(c, 'back')}
@@ -2377,7 +2431,7 @@ function buildPrintArea(){
             ${holesLayerHtml}
           </div>`;
         } else {
-          back.innerHTML += `<div class="pc" style="border:none;"></div>`;
+          back.innerHTML += `<div class="pc pc-back" style="border:none;"></div>`;
         }
       });
     });
